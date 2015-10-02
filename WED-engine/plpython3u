@@ -1,0 +1,18 @@
+Python 3 support for Postgresql on Arch Linux
+--------------------------------------------------------------------------------
+
+inside postgresql-9.4.4 src folder run:
+
+ configure --with-python PYTHON=/usr/bin/python (python 3 path)
+ make
+ cp src/pl/plpython/plpython3.so /usr/lib/postgres/
+ 
+ sudo postgres
+ psql
+ CREATE ROLE wed_admin WITH superuser noinherit;
+ GRANT wed_admin TO wedflow;
+ 
+ psql -U wedflow -d wedflow
+ SET ROLE wed_admin;
+ CREATE LANGUAGE plpython3u;
+ RESET ROLE;
