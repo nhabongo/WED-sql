@@ -20,7 +20,7 @@ CREATE TABLE WED_trace (
 CREATE TABLE WED_attr (
     aid     SERIAL NOT NULL,
     name    TEXT,
-    default_value   TEXT DEFAULT ''
+    default_value   TEXT NOT NULL DEFAULT ''
 );
 -- name must be unique 
 CREATE UNIQUE INDEX wed_attr_lower_name_idx ON WED_attr (lower(name));
