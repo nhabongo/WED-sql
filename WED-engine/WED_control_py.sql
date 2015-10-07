@@ -3,13 +3,6 @@
 --GRANT wed_admin TO wedflow;
 
 SET ROLE wed_admin;
-CREATE OR REPLACE FUNCTION pytest (a integer, b integer) RETURNS integer AS 
-$$
-    r = range(10)
-    plpy.info(list(r))
-    plpy.notice(dir(plpy))
-    return b
-$$ LANGUAGE plpython3u;
 
 ------------------------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION new_wed_attr() RETURNS TRIGGER AS 
@@ -27,10 +20,14 @@ $new_attr$
                              + plpy.quote_ident(TD['new']['name']) 
                              + ' TEXT NOT NULL DEFAULT ' 
                              + plpy.quote_literal(TD['new']['default_value']))
+                plpy.execute('ALTER TABLE wed_cond ADD COLUMN '
+                             + plpy.quote_ident(TD['new']['name']) 
+                             + ' TEXT NOT NULL DEFAULT ' 
+                             + plpy.quote_literal(TD['new']['default_value']))
         except plpy.SPIError:
-            plpy.error('Could not insert new column at wed_flow and wed_trace')
+            plpy.error('Could not insert new column at wed_flow')
         else:
-            plpy.info('Column "'+TD['new']['name']+'" inserted in wed_flow')
+            plpy.info('Column "'+TD['new']['name']+'" inserted into wed_flow, wed_trace, wed_cond')
             
     elif TD['event'] == 'UPDATE':
         if TD['new']['name'] != TD['old']['name']:
@@ -45,10 +42,14 @@ $new_attr$
                                  + plpy.quote_ident(TD['old']['name']) 
                                  + ' TO ' 
                                  + plpy.quote_ident(TD['new']['name']))
+                    plpy.execute('ALTER TABLE wed_cond RENAME COLUMN '
+                                 + plpy.quote_ident(TD['old']['name']) 
+                                 + ' TO ' 
+                                 + plpy.quote_ident(TD['new']['name']))
             except plpy.SPIError:
-                plpy.error('Could not rename columns at wed_flow and wed_trace')
+                plpy.error('Could not rename columns at wed_flow')
             else:
-                plpy.info('Column name updated in wed_flow and wed_trace')
+                plpy.info('Column name updated in wed_flow, wed_trace, wed_cond')
             
         elif TD['new']['default_value'] != TD['old']['default_value']:
             plpy.notice('Updating attribute '+TD['old']['name']+' default value :' 
@@ -63,10 +64,14 @@ $new_attr$
                                  + plpy.quote_ident(TD['old']['name']) 
                                  + ' SET DEFAULT ' 
                                  + plpy.quote_literal(TD['new']['default_value']))
+                    plpy.execute('ALTER TABLE wed_cond ALTER COLUMN '
+                                 + plpy.quote_ident(TD['old']['name']) 
+                                 + ' SET DEFAULT ' 
+                                 + plpy.quote_literal(TD['new']['default_value']))
             except plpy.SPIError:
-                plpy.error('Could not insert new column at wed_flow')
+                plpy.error('Could not insert new column into wed_flow')
             else:
-                plpy.info('Column default value updated in wed_flow and wed_trace')
+                plpy.info('Column default value updated in wed_flow, wed_trace, wed_cond')
         else:
             plpy.error('UPDATE ERROR: name and or default_value must differ from previous value')
             return None
