@@ -3,14 +3,19 @@
 DROP TABLE IF EXISTS WED_attr;
 DROP TABLE IF EXISTS WED_trace;
 DROP TABLE IF EXISTS WED_flow CASCADE;
-DROP TABLE IF EXISTS WED_cond;
-DROP SEQUENCE IF EXISTS wed_cond_cid;
+DROP TABLE IF EXISTS WED_pred;
+DROP TABLE IF EXISTS WED_cond CASCADE;
+--DROP SEQUENCE IF EXISTS wed_cond_cid;
+--CREATE SEQUENCE wed_cond_cid;
 
+-- An '*' means that WED-attributes columns will be added dynamicaly after an INSERT on WED-attr table
+--*WED-flow instances
 CREATE TABLE WED_flow (
     wid     SERIAL NOT NULL,
     PRIMARY KEY(wid)
 );
 
+--*WED-trace keeps the execution history for all instances
 CREATE TABLE WED_trace (
     wid     INTEGER NOT NULL,
     timestamp   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -25,11 +30,19 @@ CREATE TABLE WED_attr (
 -- name must be unique 
 CREATE UNIQUE INDEX wed_attr_lower_name_idx ON WED_attr (lower(name));
 
+--WED-conditions
 CREATE TABLE WED_cond (
-    uid     SERIAL NOT NULL,
+    cid     SERIAL PRIMARY KEY, --UNIQUE NOT NULL
+    cname   TEXT NOT NULL,
+    cdesc   TEXT NOT NULL DEFAULT ''
+);
+CREATE UNIQUE INDEX wed_cond_pred_idx ON WED_cond (cid, cname);
+CREATE UNIQUE INDEX wed_cond_lower_cname_idx ON WED_cond (lower(cname));
+
+--*WED-predicatives
+CREATE TABLE WED_pred (
+    pid     SERIAL PRIMARY KEY,
     cid     INTEGER NOT NULL,
     cname   TEXT NOT NULL,
-    PRIMARY KEY (uid, cid)
+    FOREIGN KEY (cid, cname) REFERENCES WED_cond (cid, cname) ON DELETE CASCADE
 );
-CREATE UNIQUE INDEX wed_cond_lower_name_idx ON WED_cond (lower(cname));
-CREATE SEQUENCE wed_cond_cid;
