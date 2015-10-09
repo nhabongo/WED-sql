@@ -2,9 +2,11 @@
 
 DROP TABLE IF EXISTS WED_attr;
 DROP TABLE IF EXISTS WED_trace;
-DROP TABLE IF EXISTS WED_flow CASCADE;
+DROP TABLE IF EXISTS WED_flow;
 DROP TABLE IF EXISTS WED_pred;
-DROP TABLE IF EXISTS WED_cond CASCADE;
+DROP TABLE IF EXISTS WED_trig;
+DROP TABLE IF EXISTS WED_cond;
+DROP TABLE IF EXISTS WED_trans;
 --DROP SEQUENCE IF EXISTS wed_cond_cid;
 --CREATE SEQUENCE wed_cond_cid;
 
@@ -44,5 +46,20 @@ CREATE TABLE WED_pred (
     pid     SERIAL PRIMARY KEY,
     cid     INTEGER NOT NULL,
     cname   TEXT NOT NULL,
-    FOREIGN KEY (cid, cname) REFERENCES WED_cond (cid, cname) ON DELETE CASCADE
+    FOREIGN KEY (cid, cname) REFERENCES WED_cond (cid, cname) ON DELETE RESTRICT
 );
+
+CREATE TABLE WED_trans (
+    tid     SERIAL PRIMARY KEY,
+    tname   TEXT NOT NULL,
+    tret    JSON NOT NULL
+);
+CREATE UNIQUE INDEX wed_trans_lower_tname_idx ON WED_trans (lower(tname));
+
+CREATE TABLE WED_trig (
+    tgid     SERIAL PRIMARY KEY,
+    cid     INTEGER REFERENCES WED_cond ON DELETE RESTRICT,
+    tid     INTEGER REFERENCES WED_trans ON DELETE RESTRICT
+);
+    
+    
