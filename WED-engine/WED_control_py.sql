@@ -107,6 +107,25 @@ DROP TRIGGER IF EXISTS new_trace_entry ON wed_flow;
 CREATE TRIGGER new_trace_entry
 AFTER INSERT OR UPDATE ON wed_flow
     FOR EACH ROW EXECUTE PROCEDURE new_wed_trace_entry();
+    
+CREATE OR REPLACE FUNCTION before_i_forget_you() RETURNS TRIGGER AS $bf$
+    
+    if TD['event'] in ['INSERT','UPDATE']:
+        
+        k,v = zip(*TD['new'].items())
+        wed_columns = str(k).replace('\'','')
+        wed_values = str(v)
+        
+        TD['new']['tgid'] = 99
+        plpy.notice(TD)
+        return "MODIFY"
+                
+$bf$ LANGUAGE plpython3u;
+
+DROP TRIGGER IF EXISTS before_i_forget ON wed_flow;
+CREATE TRIGGER before_i_forget
+BEFORE INSERT OR UPDATE ON wed_flow
+    FOR EACH ROW EXECUTE PROCEDURE before_i_forget_you();
 
 ------------------------------------------------------------------------------------------------------------------------
 

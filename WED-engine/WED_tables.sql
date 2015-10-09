@@ -14,14 +14,8 @@ DROP TABLE IF EXISTS WED_trans;
 --*WED-flow instances
 CREATE TABLE WED_flow (
     wid     SERIAL NOT NULL,
+    tgid    INTEGER,
     PRIMARY KEY(wid)
-);
-
---*WED-trace keeps the execution history for all instances
-CREATE TABLE WED_trace (
-    wid     INTEGER NOT NULL,
-    timestamp   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT
 );
 
 CREATE TABLE WED_attr (
@@ -62,4 +56,13 @@ CREATE TABLE WED_trig (
     tid     INTEGER REFERENCES WED_trans ON DELETE RESTRICT
 );
     
-    
+--*WED-trace keeps the execution history for all instances
+CREATE TABLE WED_trace (
+    wid     INTEGER,
+    tgid    INTEGER,
+    ti      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tf      TIMESTAMP DEFAULT NULL,
+    PRIMARY KEY (wid,tgid),
+    FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT,
+    FOREIGN KEY (tgid) REFERENCES WED_trig (tgid) ON DELETE RESTRICT
+);

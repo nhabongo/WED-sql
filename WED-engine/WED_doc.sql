@@ -1,4 +1,5 @@
 -- should wed_attr domain restrictions be implemented as a foreign key on wed_flow ?
+-- WED_trace could have duplicated (wid,tgid) in case of compensation ?
 
 -- WED_pred: for a given condition c(cid,cname) in WED_cond, each row in WED_cond is a conjunction of non NULL WED_attributes
 --for c. Thus, a predicate for c is the disjunction of these rows. 
