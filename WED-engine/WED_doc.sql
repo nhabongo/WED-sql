@@ -9,3 +9,4 @@
 -- how to insert a new WED-attribute (if default_value is supressed, DEFAULT VALUE '')
 --insert into wed_attr (name, default_value) values ('a0','vazio');
 
+--kernel_function(): improve column name check expression

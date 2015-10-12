@@ -84,49 +84,65 @@ AFTER INSERT OR UPDATE ON wed_attr
 --Insert a WED-flow modification into WED-trace (history)
 ------------------------------------------------------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION new_wed_trace_entry() RETURNS TRIGGER AS $new_trace_entry$
+CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     
-    if TD['event'] in ['INSERT','UPDATE']:
+    from os import urandom
+    import hashlib
+    import binascii
+    
+    def new_itkn(trigger_name):
+        salt = urandom(5)
+        hash = hashlib.md5(salt + trigger_name)
+        return hash.hexdigest()
+    
+    #-- wed_flow.iid must be absent or NULL (new wed_flow instance)
+    if TD['event'] in ['INSERT']:
         
-        k,v = zip(*TD['new'].items())
+        k,v = zip(*[x for x in TD['new'].items() if x[0] not in ['var_itkn','var_trname']])
         wed_columns = str(k).replace('\'','')
         wed_values = str(v)
+        tmp = new_itkn(b'nhaga')
+        TD['new']['var_itkn'] = tmp
         
-        try:
-            plpy.execute('INSERT INTO wed_trace ' + wed_columns + ' VALUES ' + wed_values)
-        
-        except plpy.SPIError:
-            plpy.error('Could not insert new entry into wed_trace')
-        else:
-            plpy.info('New entry added to wed_trace')
-        
-    
-$new_trace_entry$ LANGUAGE plpython3u;
-
-DROP TRIGGER IF EXISTS new_trace_entry ON wed_flow;
-CREATE TRIGGER new_trace_entry
-AFTER INSERT OR UPDATE ON wed_flow
-    FOR EACH ROW EXECUTE PROCEDURE new_wed_trace_entry();
-    
-CREATE OR REPLACE FUNCTION before_i_forget_you() RETURNS TRIGGER AS $bf$
-    
-    if TD['event'] in ['INSERT','UPDATE']:
-        
-        k,v = zip(*TD['new'].items())
-        wed_columns = str(k).replace('\'','')
-        wed_values = str(v)
-        
-        TD['new']['tgid'] = 99
-        plpy.notice(TD)
+        plpy.info(wed_columns + wed_values)
+        #try:
+        #    plpy.execute('INSERT INTO wed_trace ' + wed_columns + ' VALUES ' + wed_values)
+        #
+        #except plpy.SPIError:
+        #    plpy.error('Could not insert new entry into wed_trace')
+        #else:
+        #    plpy.info('New entry added to wed_trace')
+            
         return "MODIFY"
-                
-$bf$ LANGUAGE plpython3u;
+    
+    elif TD['event'] in ['UPDATE']:
+        #-- lookup for itkn on TRG_POOL
+        #-- if found then update wed_flow
+        #-- look for transition entry on wed_trace and set the conclusion time (tf)
+        plpy.info(TD['new'])
+        plpy.info(TD['old'])
+        if TD['new']['var_itkn'] != 'nhaga':
+            plpy.error("invalid token !")
+            return "SKIP"
+            
+        return "OK"
+    
+    else:
+        return "SKIP"
+    
+    #--insert history into wed_trace
+    #--scan wed_pred for matching wed_condition
+    #--if matching wed_condition found then scan wed_trig to fire wed_trans and register it on TRG_POOL
+    #--otherwise, check TRG_POOL for running trasitions (intermediate state). IF no running transitions for this
+    #--wed-state is found on TRG_POOL, register this inconsistent state.
+    
+$kt$ LANGUAGE plpython3u;
 
-DROP TRIGGER IF EXISTS before_i_forget ON wed_flow;
-CREATE TRIGGER before_i_forget
+DROP TRIGGER IF EXISTS kernel_trigger ON wed_flow;
+CREATE TRIGGER kernel_trigger
 BEFORE INSERT OR UPDATE ON wed_flow
-    FOR EACH ROW EXECUTE PROCEDURE before_i_forget_you();
-
+    FOR EACH ROW EXECUTE PROCEDURE kernel_function();
+    
 ------------------------------------------------------------------------------------------------------------------------
 
 --CREATE OR REPLACE FUNCTION new_wed_trace_entry() RETURNS TRIGGER AS $new_trace_entry$

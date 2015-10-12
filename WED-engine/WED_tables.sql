@@ -2,11 +2,12 @@
 
 DROP TABLE IF EXISTS WED_attr;
 DROP TABLE IF EXISTS WED_trace;
-DROP TABLE IF EXISTS WED_flow;
 DROP TABLE IF EXISTS WED_pred;
+DROP TABLE IF EXISTS TRG_POOL;
 DROP TABLE IF EXISTS WED_trig;
 DROP TABLE IF EXISTS WED_cond;
 DROP TABLE IF EXISTS WED_trans;
+DROP TABLE IF EXISTS WED_flow CASCADE;
 --DROP SEQUENCE IF EXISTS wed_cond_cid;
 --CREATE SEQUENCE wed_cond_cid;
 
@@ -14,7 +15,9 @@ DROP TABLE IF EXISTS WED_trans;
 --*WED-flow instances
 CREATE TABLE WED_flow (
     wid     SERIAL NOT NULL,
-    tgid    INTEGER,
+    var_itkn     TEXT DEFAULT NULL,
+    var_trname   TEXT DEFAULT NULL,
+    awic    BOOL DEFAULT FALSE,
     PRIMARY KEY(wid)
 );
 
@@ -44,22 +47,35 @@ CREATE TABLE WED_pred (
 );
 
 CREATE TABLE WED_trans (
-    tid     SERIAL PRIMARY KEY,
-    tname   TEXT NOT NULL,
-    tret    JSON NOT NULL
+    trid     SERIAL PRIMARY KEY,
+    trname   TEXT NOT NULL,
+    tdesc    TEXT NOT NULL DEFAULT 11
 );
-CREATE UNIQUE INDEX wed_trans_lower_tname_idx ON WED_trans (lower(tname));
+CREATE UNIQUE INDEX wed_trans_lower_tname_idx ON WED_trans (lower(trname));
 
 CREATE TABLE WED_trig (
     tgid     SERIAL PRIMARY KEY,
     cid     INTEGER REFERENCES WED_cond ON DELETE RESTRICT,
-    tid     INTEGER REFERENCES WED_trans ON DELETE RESTRICT
+    trid     INTEGER REFERENCES WED_trans ON DELETE RESTRICT,
+    tout    INTERVAL DEFAULT '01:00'
 );
-    
+
+--Running transitions
+CREATE TABLE TRG_POOL (
+    tgid    INTEGER REFERENCES WED_trig ON DELETE RESTRICT,
+    wid     INTEGER REFERENCES WED_flow ON DELETE RESTRICT,
+    itkn    TEXT NOT NULL,
+    tout    INTERVAL NOT NULL,
+    ti      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tf      TIMESTAMP NOT NULL
+);     
+CREATE UNIQUE INDEX trg_pool_itkn_idx ON TRG_POOL (lower(itkn));
+
 --*WED-trace keeps the execution history for all instances
 CREATE TABLE WED_trace (
     wid     INTEGER,
     tgid    INTEGER,
+    awic    BOOL DEFAULT FALSE,
     ti      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     tf      TIMESTAMP DEFAULT NULL,
     PRIMARY KEY (wid,tgid),
