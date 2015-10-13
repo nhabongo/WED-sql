@@ -1,4 +1,4 @@
---CREATE LANGUAGE plpythonu;
+--CREATE LANGUAGE plpython3u;
 --CREATE ROLE wed_admin WITH superuser noinherit;
 --GRANT wed_admin TO wedflow;
 
@@ -95,15 +95,37 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         hash = hashlib.md5(salt + trigger_name)
         return hash.hexdigest()
     
-    #-- wed_flow.iid must be absent or NULL (new wed_flow instance)
+    def wed_pred_match(k,v):
+        attr = [x for x in k if x not in ['wid','awic']]
+        mtch = set()
+        try:
+            cur = plpy.cursor('select * from wed_pred')
+        except plpy.SPIError:
+            plpy.error('ERROR: wed_pred scan')
+        else:
+            #-- wed_pred must be validated to not allow all WED-attributes being NULL at once
+            for r in cur:
+                flag = True
+                for c in attr:
+                    if r[c]:
+                        plpy.info(r['cid'],c,TD['new'][c], r[c])
+                        flag = flag and (TD['new'][c].lower() == r[c].lower())
+                if flag:
+                    mtch.add(r['cid'])
+        return mtch
+                
+    #-- New wed-flow instance
     if TD['event'] in ['INSERT']:
         
-        k,v = zip(*[x for x in TD['new'].items() if x[0] not in ['var_itkn','var_trname']])
+        #--Only get the WED-attributes columns to insert into WED-trace
+        k,v = zip(*[x for x in TD['new'].items() if x[0] not in ['var_itkn']])
         wed_columns = str(k).replace('\'','')
         wed_values = str(v)
-        tmp = new_itkn(b'nhaga')
-        TD['new']['var_itkn'] = tmp
         
+        #--tmp = new_itkn(b'nhaga')
+        #--TD['new']['var_itkn'] = tmp
+        
+        plpy.info(wed_pred_match(k,v))        
         plpy.info(wed_columns + wed_values)
         #try:
         #    plpy.execute('INSERT INTO wed_trace ' + wed_columns + ' VALUES ' + wed_values)
@@ -145,17 +167,15 @@ BEFORE INSERT OR UPDATE ON wed_flow
     
 ------------------------------------------------------------------------------------------------------------------------
 
---CREATE OR REPLACE FUNCTION new_wed_trace_entry() RETURNS TRIGGER AS $new_trace_entry$
---   
---    if TD['event'] in ['INSERT','UPDATE']:
---        
---        
---    
---$new_trace_entry$ LANGUAGE plpython3u;
---
---DROP TRIGGER IF EXISTS new_trace_entry ON wed_flow;
---CREATE TRIGGER new_trace_entry
---AFTER INSERT OR UPDATE ON wed_flow
---    FOR EACH ROW EXECUTE PROCEDURE new_wed_trace_entry();
+CREATE OR REPLACE FUNCTION predicate_validation() RETURNS TRIGGER AS $pv$
+   
+      return "OK"  
+    
+$pv$ LANGUAGE plpython3u;
+
+DROP TRIGGER IF EXISTS validation ON wed_pred;
+CREATE TRIGGER validation
+BEFORE INSERT OR UPDATE ON wed_pred
+    FOR EACH ROW EXECUTE PROCEDURE predicate_validation();
 
 RESET ROLE;

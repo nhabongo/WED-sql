@@ -16,7 +16,6 @@ DROP TABLE IF EXISTS WED_flow CASCADE;
 CREATE TABLE WED_flow (
     wid     SERIAL NOT NULL,
     var_itkn     TEXT DEFAULT NULL,
-    var_trname   TEXT DEFAULT NULL,
     awic    BOOL DEFAULT FALSE,
     PRIMARY KEY(wid)
 );
@@ -49,25 +48,27 @@ CREATE TABLE WED_pred (
 CREATE TABLE WED_trans (
     trid     SERIAL PRIMARY KEY,
     trname   TEXT NOT NULL,
-    tdesc    TEXT NOT NULL DEFAULT 11
+    trdesc    TEXT NOT NULL DEFAULT 11
 );
 CREATE UNIQUE INDEX wed_trans_lower_tname_idx ON WED_trans (lower(trname));
 
 CREATE TABLE WED_trig (
     tgid     SERIAL PRIMARY KEY,
+    tgname  TEXT NOT NULL DEFAULT 'anonymous',
     cid     INTEGER REFERENCES WED_cond ON DELETE RESTRICT,
     trid     INTEGER REFERENCES WED_trans ON DELETE RESTRICT,
     tout    INTERVAL DEFAULT '01:00'
 );
 
---Running transitions
+--Running transitions (set locked and ti)
 CREATE TABLE TRG_POOL (
     tgid    INTEGER REFERENCES WED_trig ON DELETE RESTRICT,
     wid     INTEGER REFERENCES WED_flow ON DELETE RESTRICT,
     itkn    TEXT NOT NULL,
+    locked  BOOL DEFAULT FALSE,    
     tout    INTERVAL NOT NULL,
-    ti      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    tf      TIMESTAMP NOT NULL
+    ti      TIMESTAMP DEFAULT NULL,
+    tf      TIMESTAMP DEFAULT NULL
 );     
 CREATE UNIQUE INDEX trg_pool_itkn_idx ON TRG_POOL (lower(itkn));
 
@@ -76,9 +77,7 @@ CREATE TABLE WED_trace (
     wid     INTEGER,
     tgid    INTEGER,
     awic    BOOL DEFAULT FALSE,
-    ti      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    tf      TIMESTAMP DEFAULT NULL,
-    PRIMARY KEY (wid,tgid),
+    tstmp      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT,
     FOREIGN KEY (tgid) REFERENCES WED_trig (tgid) ON DELETE RESTRICT
 );

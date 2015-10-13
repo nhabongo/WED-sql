@@ -10,3 +10,8 @@
 --insert into wed_attr (name, default_value) values ('a0','vazio');
 
 --kernel_function(): improve column name check expression
+--check for condition without a predicate
+--check for conditions not associated with at least one transition (conditions that not fire any trigger)
+
+--algorithm: on insert: wed-pred (find condition id) -> wed_trig (find transition id) -> trg_pool (registry fired trigger) -> wed_trace (history)
+--TRG_POOL store the exceptions (for now)
