@@ -14,4 +14,9 @@
 --check for conditions not associated with at least one transition (conditions that not fire any trigger)
 
 --algorithm: on insert: wed-pred (find condition id) -> wed_trig (find transition id) -> trg_pool (registry fired trigger) -> wed_trace (history)
---TRG_POOL store the exceptions (for now)
+--TRG_POOL store the trigger exceptions (for now)
+-- Could be two instances of the same trigger running for the same WED-flow instance ! (Consider two ongoing WED-transitions t1
+--and t2 (lock is set on trg_pool), if t2 completes first and set the new WED-state to the very same state that fired t1, then
+--there will be two simultaneous running transitions t1. Sounds like a semantic error.
+--write a function to verify that all WED-conditions fire at least one WED-transition
+--Can two or more diferent conditions fire the same transition ? 

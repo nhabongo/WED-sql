@@ -59,6 +59,7 @@ CREATE TABLE WED_trig (
     trid     INTEGER REFERENCES WED_trans ON DELETE RESTRICT,
     tout    INTERVAL DEFAULT '01:00'
 );
+CREATE INDEX wed_trig_cid_idx ON WED_trig (cid);
 
 --Running transitions (set locked and ti)
 CREATE TABLE TRG_POOL (
@@ -75,7 +76,7 @@ CREATE UNIQUE INDEX trg_pool_itkn_idx ON TRG_POOL (lower(itkn));
 --*WED-trace keeps the execution history for all instances
 CREATE TABLE WED_trace (
     wid     INTEGER,
-    tgid    INTEGER,
+    tgid    INTEGER DEFAULT NULL,
     awic    BOOL DEFAULT FALSE,
     tstmp      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT,
