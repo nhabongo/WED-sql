@@ -18,5 +18,11 @@
 -- Could be two instances of the same trigger running for the same WED-flow instance ! (Consider two ongoing WED-transitions t1
 --and t2 (lock is set on trg_pool), if t2 completes first and set the new WED-state to the very same state that fired t1, then
 --there will be two simultaneous running transitions t1. Sounds like a semantic error.
---write a function to verify that all WED-conditions fire at least one WED-transition
---Can two or more diferent conditions fire the same transition ? 
+--write a function to verify that all WED-conditions fire at least one WED-transition (DONE)
+--Can two or more diferent conditions fire the same transition ? (NO: use predicates instead)
+--pgagent or background workers to catch stalled running transitions (timeout in prg_pool table)
+--create a table to store all possible states (or maybe just final states)
+--block final states for further modifications ? (DONE)
+--improve job management(maybe store an worker id)
+--exception tokens
+ 

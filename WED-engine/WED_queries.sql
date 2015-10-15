@@ -34,7 +34,11 @@ FROM wed_cond
     INNER JOIN wed_trig ON wed_cond.cid = wed_trig.cid 
     INNER JOIN wed_trans ON wed_trig.trid = wed_trans.trid;
 
-COMMIT;                                      
+COMMIT;
+--list all jobs not locked
+--SELECT * FROM job_pool WHERE NOT locked;          
+--lock a job
+--UPDATE job_pool SET locked='t' WHERE wid=2 AND tgid=2 RETURNING itkn;                            
 --list exceptions
 --SELECT * FROM trg_pool WHERE locked AND (CURRENT_TIMESTAMP - ti) > tout;
 

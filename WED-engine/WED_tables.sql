@@ -3,7 +3,7 @@
 DROP TABLE IF EXISTS WED_attr;
 DROP TABLE IF EXISTS WED_trace;
 DROP TABLE IF EXISTS WED_pred;
-DROP TABLE IF EXISTS TRG_POOL;
+DROP TABLE IF EXISTS JOB_POOL;
 DROP TABLE IF EXISTS WED_trig;
 DROP TABLE IF EXISTS WED_cond;
 DROP TABLE IF EXISTS WED_trans;
@@ -42,7 +42,7 @@ CREATE TABLE WED_pred (
     pid     SERIAL PRIMARY KEY,
     cid     INTEGER NOT NULL,
     cname   TEXT NOT NULL,
-    FOREIGN KEY (cid, cname) REFERENCES WED_cond (cid, cname) ON DELETE RESTRICT
+    FOREIGN KEY (cid, cname) REFERENCES WED_cond (cid, cname) ON DELETE CASCADE
 );
 
 CREATE TABLE WED_trans (
@@ -60,9 +60,10 @@ CREATE TABLE WED_trig (
     tout    INTERVAL DEFAULT '01:00'
 );
 CREATE INDEX wed_trig_cid_idx ON WED_trig (cid);
+CREATE UNIQUE INDEX wed_trig_trid_idx ON WED_trig (trid);
 
 --Running transitions (set locked and ti)
-CREATE TABLE TRG_POOL (
+CREATE TABLE JOB_POOL (
     tgid    INTEGER REFERENCES WED_trig ON DELETE RESTRICT,
     wid     INTEGER REFERENCES WED_flow ON DELETE RESTRICT,
     itkn    TEXT NOT NULL,
@@ -71,13 +72,14 @@ CREATE TABLE TRG_POOL (
     ti      TIMESTAMP DEFAULT NULL,
     tf      TIMESTAMP DEFAULT NULL
 );     
-CREATE UNIQUE INDEX trg_pool_itkn_idx ON TRG_POOL (lower(itkn));
+CREATE UNIQUE INDEX trg_pool_itkn_idx ON JOB_POOL (lower(itkn));
 
 --*WED-trace keeps the execution history for all instances
 CREATE TABLE WED_trace (
     wid     INTEGER,
     tgid    INTEGER DEFAULT NULL,
     awic    BOOL DEFAULT FALSE,
+    cons    BOOL DEFAULT TRUE,
     tstmp      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT,
     FOREIGN KEY (tgid) REFERENCES WED_trig (tgid) ON DELETE RESTRICT
