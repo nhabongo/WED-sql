@@ -52,6 +52,7 @@ CREATE TABLE WED_trans (
 );
 CREATE UNIQUE INDEX wed_trans_lower_tname_idx ON WED_trans (lower(trname));
 
+-- use wed_pred to allow two or more diferent conditions to fire the same transition
 CREATE TABLE WED_trig (
     tgid     SERIAL PRIMARY KEY,
     tgname  TEXT NOT NULL DEFAULT 'anonymous',

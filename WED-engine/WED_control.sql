@@ -191,16 +191,22 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         except plpy.SPIError:
             plpy.error('Find job error')
         else:
-            return res
+            return list(res)
             
-            
+    #-- scan job_pool for pending transitions for WED-flow instance wid
+    def pending_transitions(wid):
+        try:
+            res = plpy.execute('select tgid from job_pool where wid='+str(wid)+' and tf is null')
+        except plpy.SPIError:
+            plpy.error('Pending transitions error')
+        else:
+            return {x['tgid'] for x in res}
     
     
+    #--Only get the WED-attributes columns to insert into WED-trace
+    k,v = zip(*[x for x in TD['new'].items() if x[0] not in ['var_itkn']])
     #-- New wed-flow instance (AFTER INSERT)----------------------------------------------------------------------------
     if TD['event'] in ['INSERT']:
-        
-        #--Only get the WED-attributes columns to insert into WED-trace
-        k,v = zip(*[x for x in TD['new'].items() if x[0] not in ['var_itkn']])
         
         trg_set = wed_pred_match(k,v)
         if not trg_set:
@@ -217,7 +223,6 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         
         #-- if the initial state is a final state, do not fire any triggers
         if not TD['new']['awic']:
-            #-- if wed_pred_match(k,v) is empty and there is no locked triggers for this instance, we have an inconsistent state
             ftrg = squeeze_the_trigger(trg_set)
             if not ftrg:
                 plpy.error('This initial WED-state matches WED-conditions '+str(trg_set)+'yet did not fire any WED-trigger, aborting ...')
@@ -227,6 +232,8 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
 
     #-- Updating an WED-state (BEFORE UPDATE)---------------------------------------------------------------------------
     elif TD['event'] in ['UPDATE']:
+        for i in TD['args']:
+            plpy.info('args',i)
         #-- lookup for itkn on JOB_POOL
         #-- if found then update wed_flow
         #--plpy.info(TD['new'])
@@ -234,15 +241,26 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         if TD['old']['awic'] == True:
             plpy.error('Cannot modify a final WED-state !')
         
-        #-- could include some exception tokens
+        #-- token was provided
         if TD['new']['var_itkn']:
+            #--ignored token lookup on job_pool if itkn='exception'
             if TD['new']['var_itkn'].lower() != 'exception': 
                 job = find_job(TD['new']['var_itkn'])
-                #--plpy.notice(job[0] if len(job) else 'nada')
+                plpy.notice(job,'nhaga')
                 if not len(job):
                     plpy.error('job not found, not locked or already completed, aborting ...')
                 else:
-                     #--fire triggers (check for redundancy)
+                     trans_set = pending_transitions(job[0]['wid'])
+                     trg_set = wed_pred_match(k,v)
+                     plpy.notice(trans_set,trg_set)
+                     
+                     if (not trans_set) and (not trg_set) and (not TD['new']['awic']):
+                        plpy.error('INCONSISTENT WED-state DETECTED !!!')
+                     else:
+                        squeeze_the_trigger(trg_set - trans_set)
+                        new_trace_entry(k+('tgid',),v+(job[0]['tgid'],))
+                        
+                     #--plpy.error('ABORT')
                      #--if not scan job_pool for open tasks (tf null)
                      #----if not this state is inconsistent
                      #------wed_trace(cons=false)
@@ -262,23 +280,17 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     else:
         return "SKIP"
     
-    #--insert history into wed_trace
-    #--scan wed_pred for matching wed_condition
-    #--if matching wed_condition found then scan wed_trig to fire wed_trans and register it on JOB_POOL
-    #--otherwise, check JOB_POOL for running trasitions (intermediate state). IF no running transitions for this
-    #--wed-state is found on JOB_POOL, register this inconsistent state.
-    
 $kt$ LANGUAGE plpython3u;
 
 DROP TRIGGER IF EXISTS kernel_trigger_insert ON wed_flow;
 CREATE TRIGGER kernel_trigger_insert
 AFTER INSERT ON wed_flow
-    FOR EACH ROW EXECUTE PROCEDURE kernel_function();
+    FOR EACH ROW EXECUTE PROCEDURE kernel_function('insert');
     
 DROP TRIGGER IF EXISTS kernel_trigger_update ON wed_flow;
 CREATE TRIGGER kernel_trigger_update
 BEFORE UPDATE ON wed_flow
-    FOR EACH ROW EXECUTE PROCEDURE kernel_function();
+    FOR EACH ROW EXECUTE PROCEDURE kernel_function('update');
     
 ------------------------------------------------------------------------------------------------------------------------
 -- Lock a job from job_pool seting locked=True and ti = CURRENT_TIMESTAMP
@@ -286,8 +298,8 @@ CREATE OR REPLACE FUNCTION set_job_lock() RETURNS TRIGGER AS $pv$
     
     from datetime import datetime
        
-    plpy.info(TD['new'])
-    plpy.info(TD['old'])
+    #--plpy.info(TD['new'])
+    #--plpy.info(TD['old'])
    
     if TD['old']['locked']:
         plpy.error('Job \''+TD['new']['itkn']+'\' already locked, aborting ...')
