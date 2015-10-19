@@ -101,8 +101,9 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     def wed_pred_match(k,v):
         attr = [x for x in k if x not in ['wid','awic']]
         mtch = set()
+        final = False
         try:
-            cur = plpy.cursor('select * from wed_pred')
+            cur = plpy.cursor('select p.*, c.final from wed_pred p inner join wed_cond c on p.cid = c.cid')
         except plpy.SPIError:
             plpy.error('ERROR: wed_pred scan')
         else:
@@ -111,11 +112,12 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                 flag = True
                 for c in attr:
                     if r[c]:
-                        #--plpy.info(r['cid'],c,TD['new'][c], r[c])
                         flag = flag and (TD['new'][c].lower() == r[c].lower())
                 if flag:
+                    plpy.info('MATCHES: ',r)
                     mtch.add(r['cid'])
-        return mtch
+                    final = final or r['final']
+        return (mtch, final)
     
     #--must block diferents conditions firing the same transition ------------------------------------------------------
     def squeeze_the_trigger(trg_set):
@@ -143,10 +145,14 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                     ftrg += 1
         return ftrg            
     #--Create a new entry on history (WED_trace table) -----------------------------------------------------------------
-    def new_trace_entry(k,v,tgid=0):
+    def new_trace_entry(k,v,tgid=0,final=0):
         if tgid:
             k = k + ('tgid',)
             v = v + (tgid,)
+        
+        if final:
+            k = k + ('final',)
+            v = v + (True,)
         
         wed_columns = str(k).replace('\'','')
         wed_values = str(v)
@@ -168,14 +174,26 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                 return False
             return True
     
-    #-- Check for conditions that do not fire at least one transition --------------------------------------------------
+    #-- Check for conditions that do not fire at least one transition (ignore final conditions)-------------------------
     def wed_trig_validation():
         try:
-            res = plpy.execute('select c.cid from wed_cond c left join wed_trig t on c.cid = t.cid where t.tgid is null')
+            res = plpy.execute('select c.cid from wed_cond c left join wed_trig t '+
+                               'on c.cid = t.cid where t.tgid is null and (not c.final)')
         except plpy.SPIError:
             plpy.error('Cond-Trig validation error')
         else:
             if len(res):
+                return False
+            return True
+    
+    #-- Check if there is at least one final condition  ----------------------------------------------------------------
+    def wed_final_cond_validation():
+        try:
+            res = plpy.execute('select cid from wed_cond where final')
+        except plpy.SPIError:
+            plpy.error('Final cond validation error')
+        else:
+            if not len(res):
                 return False
             return True
     
@@ -208,12 +226,16 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     #-- New wed-flow instance (AFTER INSERT)----------------------------------------------------------------------------
     if TD['event'] in ['INSERT']:
         
-        trg_set = wed_pred_match(k,v)
-        if not trg_set:
+        trg_set, final = wed_pred_match(k,v)
+        plpy.info(trg_set, final)  
+        if (not trg_set) and (not final):
             plpy.error('No predicate matches this initial WED-state, aborting ...')
             
-        #--plpy.info(trg_set)        
+        
         #--plpy.info(k,v)
+        
+        if not wed_final_cond_validation():
+            plpy.error('No final condition(s) found !')
         
         if not wed_cond_validation():
             plpy.error('Condition without predicate found !')
@@ -222,13 +244,15 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
             plpy.error('Condition not associated with any transition found !')
         
         #-- if the initial state is a final state, do not fire any triggers
-        if not TD['new']['awic']:
-            ftrg = squeeze_the_trigger(trg_set)
-            if not ftrg:
-                plpy.error('This initial WED-state matches WED-conditions '+str(trg_set)+'yet did not fire any WED-trigger, aborting ...')
-        
-        #--write the new state on wed_trace (tgid is the id of the trigger that lead to this state)
-        new_trace_entry(k,v)    
+        if not final: 
+            squeeze_the_trigger(trg_set)
+            new_trace_entry(k,v)
+        else:
+            plpy.notice('Final WED-state reached (no triggers fired).')
+            new_trace_entry(k,v,final=True)
+            #-- Write the new state on wed_trace (tgid is the id of the trigger that lead to this state. It is null only
+            #-- for initial states)
+            
 
     #-- Updating an WED-state (BEFORE UPDATE)---------------------------------------------------------------------------
     elif TD['event'] in ['UPDATE']:

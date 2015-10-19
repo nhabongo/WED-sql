@@ -5,9 +5,11 @@ INSERT INTO wed_attr (name, default_value) values ('a3','new');
 
 --WED-conditions
 INSERT INTO wed_cond (cname,cdesc) values ('c1','condition 1'),('c2','condition 2');
-INSERT INTO wed_pred (cid,cname,a1,a3) values ((select cid from wed_cond where cname='c1'), 'c1', 'waiting', 'seated');
-INSERT INTO wed_pred (cid,cname,a2) values ((select cid from wed_cond where cname='c1'), 'c1', 'ready');
-INSERT INTO wed_pred (cid,cname,a1) values ((select cid from wed_cond where cname='c2'), 'c2', 'received');
+INSERT INTO wed_cond (final,cname,cdesc) values ('t','cf','final condition');
+INSERT INTO wed_pred (cid,a1,a3) values ((select cid from wed_cond where cname='c1'), 'waiting', 'seated');
+INSERT INTO wed_pred (cid,a2) values ((select cid from wed_cond where cname='c1'), 'ready');
+INSERT INTO wed_pred (cid,a1) values ((select cid from wed_cond where cname='c2'), 'received');
+INSERT INTO wed_pred (cid,a1,a2,a3) values ((select cid from wed_cond where cname='cf'), 'final','final','final');
 
 --WED-transitions
 INSERT INTO wed_trans (trname,trdesc) values ('tr1', 'transition one');
@@ -42,5 +44,4 @@ COMMIT;
 --list exceptions
 --SELECT * FROM trg_pool WHERE locked AND (CURRENT_TIMESTAMP - ti) > tout;
 
---get a task
-                                                                   
+--get a task                        

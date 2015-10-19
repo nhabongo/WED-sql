@@ -34,15 +34,13 @@ CREATE TABLE WED_cond (
     cname   TEXT NOT NULL,
     cdesc   TEXT NOT NULL DEFAULT ''
 );
-CREATE UNIQUE INDEX wed_cond_pred_idx ON WED_cond (cid, cname);
 CREATE UNIQUE INDEX wed_cond_lower_cname_idx ON WED_cond (lower(cname));
 
 --*WED-predicatives
 CREATE TABLE WED_pred (
     pid     SERIAL PRIMARY KEY,
     cid     INTEGER NOT NULL,
-    cname   TEXT NOT NULL,
-    FOREIGN KEY (cid, cname) REFERENCES WED_cond (cid, cname) ON DELETE CASCADE
+    FOREIGN KEY (cid) REFERENCES WED_cond (cid) ON DELETE CASCADE
 );
 
 CREATE TABLE WED_trans (
@@ -56,25 +54,29 @@ CREATE UNIQUE INDEX wed_trans_lower_tname_idx ON WED_trans (lower(trname));
 CREATE TABLE WED_trig (
     tgid     SERIAL PRIMARY KEY,
     tgname  TEXT NOT NULL DEFAULT 'anonymous',
-    cid     INTEGER REFERENCES WED_cond ON DELETE RESTRICT,
-    trid     INTEGER REFERENCES WED_trans ON DELETE RESTRICT,
-    tout    INTERVAL DEFAULT '01:00'
+    cid     INTEGER NOT NULL,
+    trid     INTEGER NOT NULL,
+    tout    INTERVAL DEFAULT '01:00',
+    FOREIGN KEY (trid) REFERENCES WED_trans (trid) ON DELETE RESTRICT,
+    FOREIGN KEY (cid) REFERENCES WED_cond (cid) ON DELETE RESTRICT
 );
 CREATE INDEX wed_trig_cid_idx ON WED_trig (cid);
 CREATE UNIQUE INDEX wed_trig_trid_idx ON WED_trig (trid);
 
 --Running transitions (set locked and ti)
 CREATE TABLE JOB_POOL (
-    tgid    INTEGER REFERENCES WED_trig ON DELETE RESTRICT,
-    wid     INTEGER REFERENCES WED_flow ON DELETE RESTRICT,
-    uptkn    TEXT NOT NULL,
-    lckid    TEXT NOT NULL,
+    tgid    INTEGER NOT NULL ,
+    wid     INTEGER NOT NULL ,
+    uptkn   TEXT NOT NULL,
+    lckid   TEXT,
     locked  BOOL DEFAULT FALSE,    
     tout    INTERVAL NOT NULL,
     ti      TIMESTAMP DEFAULT NULL,
-    tf      TIMESTAMP DEFAULT NULL
+    tf      TIMESTAMP DEFAULT NULL,
+    FOREIGN KEY (tgid) REFERENCES WED_trig (tgid) ON DELETE RESTRICT,
+    FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT
 );     
-CREATE UNIQUE INDEX trg_pool_itkn_idx ON JOB_POOL (lower(itkn));
+CREATE UNIQUE INDEX trg_pool_itkn_idx ON JOB_POOL (lower(uptkn));
 
 --*WED-trace keeps the execution history for all instances
 CREATE TABLE WED_trace (
