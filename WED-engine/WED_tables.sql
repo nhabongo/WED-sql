@@ -15,8 +15,7 @@ DROP TABLE IF EXISTS WED_flow CASCADE;
 --*WED-flow instances
 CREATE TABLE WED_flow (
     wid     SERIAL NOT NULL,
-    var_itkn     TEXT DEFAULT NULL,
-    awic    BOOL DEFAULT FALSE,
+    var_uptkn     TEXT DEFAULT NULL,
     PRIMARY KEY(wid)
 );
 
@@ -31,6 +30,7 @@ CREATE UNIQUE INDEX wed_attr_lower_name_idx ON WED_attr (lower(name));
 --WED-conditions
 CREATE TABLE WED_cond (
     cid     SERIAL PRIMARY KEY, --UNIQUE NOT NULL
+    final   BOOL DEFAULT FALSE,
     cname   TEXT NOT NULL,
     cdesc   TEXT NOT NULL DEFAULT ''
 );
@@ -67,7 +67,8 @@ CREATE UNIQUE INDEX wed_trig_trid_idx ON WED_trig (trid);
 CREATE TABLE JOB_POOL (
     tgid    INTEGER REFERENCES WED_trig ON DELETE RESTRICT,
     wid     INTEGER REFERENCES WED_flow ON DELETE RESTRICT,
-    itkn    TEXT NOT NULL,
+    uptkn    TEXT NOT NULL,
+    lckid    TEXT NOT NULL,
     locked  BOOL DEFAULT FALSE,    
     tout    INTERVAL NOT NULL,
     ti      TIMESTAMP DEFAULT NULL,
@@ -79,8 +80,8 @@ CREATE UNIQUE INDEX trg_pool_itkn_idx ON JOB_POOL (lower(itkn));
 CREATE TABLE WED_trace (
     wid     INTEGER,
     tgid    INTEGER DEFAULT NULL,
-    awic    BOOL DEFAULT FALSE,
-    cons    BOOL DEFAULT TRUE,
+    final    BOOL DEFAULT FALSE,
+    excpt    BOOL DEFAULT FALSE,
     tstmp      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT,
     FOREIGN KEY (tgid) REFERENCES WED_trig (tgid) ON DELETE RESTRICT

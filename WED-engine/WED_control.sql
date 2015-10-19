@@ -92,7 +92,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     import binascii
     
     #--Generates new instance trigger token ----------------------------------------------------------------------------
-    def new_itkn(trigger_name):
+    def new_uptkn(trigger_name):
         salt = urandom(5)
         hash = hashlib.md5(salt + trigger_name)
         return hash.hexdigest()
@@ -132,10 +132,10 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
             for r in cur:
                 #--plpy.info(r)
                 
-                itkn = new_itkn(r['tgname'].encode('utf-8'))
+                uptkn = new_uptkn(r['tgname'].encode('utf-8'))
                 try:
-                    plpy.execute('INSERT INTO job_pool (tgid,wid,itkn,tout) VALUES ' + 
-                              str((r['tgid'],TD['new']['wid'],itkn,r['tout'])))
+                    plpy.execute('INSERT INTO job_pool (tgid,wid,uptkn,tout) VALUES ' + 
+                              str((r['tgid'],TD['new']['wid'],uptkn,r['tout'])))
                 except plpy.SPIError as e:
                     plpy.info('ERROR inserting new entry at JOB_POOL')
                     plpy.error(e)
@@ -179,14 +179,14 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                 return False
             return True
     
-    #-- Find job with itkn on JOB_POOL ---------------------------------------------------------------------------------
-    def find_job(itkn):
+    #-- Find job with uptkn on JOB_POOL ---------------------------------------------------------------------------------
+    def find_job(uptkn):
         try:
             with plpy.subtransaction():
                 plpy.execute('alter table job_pool disable trigger lock_job')
                 res = plpy.execute('update job_pool set tf='+plpy.quote_literal(str(datetime.now()))+
-                                   '::timestamp where itkn='+plpy.quote_literal(itkn)+
-                                   'and locked and tf is null returning tgid,wid,itkn,locked,tout,ti,tf')
+                                   '::timestamp where uptkn='+plpy.quote_literal(uptkn)+
+                                   'and locked and tf is null returning tgid,wid,uptkn,locked,tout,ti,tf')
                 plpy.execute('alter table job_pool enable trigger lock_job')
         except plpy.SPIError:
             plpy.error('Find job error')
@@ -204,7 +204,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     
     
     #--Only get the WED-attributes columns to insert into WED-trace
-    k,v = zip(*[x for x in TD['new'].items() if x[0] not in ['var_itkn']])
+    k,v = zip(*[x for x in TD['new'].items() if x[0] not in ['var_uptkn']])
     #-- New wed-flow instance (AFTER INSERT)----------------------------------------------------------------------------
     if TD['event'] in ['INSERT']:
         
@@ -234,7 +234,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     elif TD['event'] in ['UPDATE']:
         for i in TD['args']:
             plpy.info('args',i)
-        #-- lookup for itkn on JOB_POOL
+        #-- lookup for uptkn on JOB_POOL
         #-- if found then update wed_flow
         #--plpy.info(TD['new'])
         #--plpy.info(TD['old'])
@@ -242,10 +242,10 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
             plpy.error('Cannot modify a final WED-state !')
         
         #-- token was provided
-        if TD['new']['var_itkn']:
-            #--ignored token lookup on job_pool if itkn='exception'
-            if TD['new']['var_itkn'].lower() != 'exception': 
-                job = find_job(TD['new']['var_itkn'])
+        if TD['new']['var_uptkn']:
+            #--ignored token lookup on job_pool if uptkn='exception'
+            if TD['new']['var_uptkn'].lower() != 'exception': 
+                job = find_job(TD['new']['var_uptkn'])
                 plpy.notice(job,'nhaga')
                 if not len(job):
                     plpy.error('job not found, not locked or already completed, aborting ...')
@@ -302,7 +302,7 @@ CREATE OR REPLACE FUNCTION set_job_lock() RETURNS TRIGGER AS $pv$
     #--plpy.info(TD['old'])
    
     if TD['old']['locked']:
-        plpy.error('Job \''+TD['new']['itkn']+'\' already locked, aborting ...')
+        plpy.error('Job \''+TD['new']['uptkn']+'\' already locked, aborting ...')
     
     if TD['new']['locked']:
         #-- allow update only on 'locked' column
