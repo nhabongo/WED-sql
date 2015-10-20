@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS JOB_POOL;
 DROP TABLE IF EXISTS WED_trig;
 DROP TABLE IF EXISTS WED_cond;
 DROP TABLE IF EXISTS WED_trans;
+DROP TABLE IF EXISTS ST_STATUS;
 DROP TABLE IF EXISTS WED_flow CASCADE;
 --DROP SEQUENCE IF EXISTS wed_cond_cid;
 --CREATE SEQUENCE wed_cond_cid;
@@ -30,7 +31,7 @@ CREATE UNIQUE INDEX wed_attr_lower_name_idx ON WED_attr (lower(name));
 --WED-conditions
 CREATE TABLE WED_cond (
     cid     SERIAL PRIMARY KEY, --UNIQUE NOT NULL
-    final   BOOL DEFAULT FALSE,
+    final   BOOL NOT NULL DEFAULT FALSE,
     cname   TEXT NOT NULL,
     cdesc   TEXT NOT NULL DEFAULT ''
 );
@@ -69,7 +70,7 @@ CREATE TABLE JOB_POOL (
     wid     INTEGER NOT NULL ,
     uptkn   TEXT NOT NULL,
     lckid   TEXT,
-    locked  BOOL DEFAULT FALSE,    
+    locked  BOOL NOT NULL DEFAULT FALSE,    
     tout    INTERVAL NOT NULL,
     ti      TIMESTAMP DEFAULT NULL,
     tf      TIMESTAMP DEFAULT NULL,
@@ -78,12 +79,19 @@ CREATE TABLE JOB_POOL (
 );     
 CREATE UNIQUE INDEX trg_pool_itkn_idx ON JOB_POOL (lower(uptkn));
 
+--Fast final WED-state detection
+CREATE TABLE ST_STATUS (
+    wid     INTEGER PRIMARY KEY,
+    final   BOOL NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT
+);
+
 --*WED-trace keeps the execution history for all instances
 CREATE TABLE WED_trace (
     wid     INTEGER,
     tgid    INTEGER DEFAULT NULL,
-    final    BOOL DEFAULT FALSE,
-    excpt    BOOL DEFAULT FALSE,
+    final    BOOL NOT NULL DEFAULT FALSE,
+    excpt    BOOL NOT NULL DEFAULT FALSE,
     tstmp      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT,
     FOREIGN KEY (tgid) REFERENCES WED_trig (tgid) ON DELETE RESTRICT
