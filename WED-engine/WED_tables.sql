@@ -36,6 +36,8 @@ CREATE TABLE WED_cond (
     cdesc   TEXT NOT NULL DEFAULT ''
 );
 CREATE UNIQUE INDEX wed_cond_lower_cname_idx ON WED_cond (lower(cname));
+CREATE UNIQUE INDEX wed_cond_final_idx ON WED_cond (final) WHERE final is TRUE;
+
 
 --*WED-predicatives
 CREATE TABLE WED_pred (
@@ -83,6 +85,7 @@ CREATE UNIQUE INDEX trg_pool_itkn_idx ON JOB_POOL (lower(uptkn));
 CREATE TABLE ST_STATUS (
     wid     INTEGER PRIMARY KEY,
     final   BOOL NOT NULL DEFAULT FALSE,
+    excpt   BOOL NOT NULL DEFAULT FALSE,
     FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT
 );
 
