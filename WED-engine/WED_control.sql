@@ -7,9 +7,9 @@ SET ROLE wed_admin;
 ------------------------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION new_wed_attr() RETURNS TRIGGER AS 
 $new_attr$
-    plpy.info('Trigger "'+TD['name']+'" ('+TD['event']+','+TD['when']+') on "'+TD['table_name']+'"')
+    #--plpy.info('Trigger "'+TD['name']+'" ('+TD['event']+','+TD['when']+') on "'+TD['table_name']+'"')
     if TD['event'] == 'INSERT':
-        plpy.notice('Inserting new attribute: ' + TD['new']['name'])
+        #--plpy.notice('Inserting new attribute: ' + TD['new']['name'])
         try:
             with plpy.subtransaction():
                 plpy.execute('ALTER TABLE wed_flow ADD COLUMN ' 
@@ -26,11 +26,11 @@ $new_attr$
         except plpy.SPIError:
             plpy.error('Could not insert new column at wed_flow')
         else:
-            plpy.info('Column "'+TD['new']['name']+'" inserted into wed_flow, wed_trace, wed_cond')
+            plpy.info('Column "'+TD['new']['name']+'" inserted into wed_flow, wed_trace, wed_pred')
             
     elif TD['event'] == 'UPDATE':
         if TD['new']['name'] != TD['old']['name']:
-            plpy.notice('Updating attribute name: ' + TD['old']['name'] + ' -> ' + TD['new']['name'])
+            #--plpy.notice('Updating attribute name: ' + TD['old']['name'] + ' -> ' + TD['new']['name'])
             try:
                 with plpy.subtransaction():
                     plpy.execute('ALTER TABLE wed_flow RENAME COLUMN ' 
@@ -48,11 +48,11 @@ $new_attr$
             except plpy.SPIError:
                 plpy.error('Could not rename columns at wed_flow')
             else:
-                plpy.info('Column name updated in wed_flow, wed_trace, wed_cond')
+                plpy.info('Column name updated in wed_flow, wed_trace, wed_pred')
             
         elif TD['new']['default_value'] != TD['old']['default_value']:
-            plpy.notice('Updating attribute '+TD['old']['name']+' default value :' 
-                        + TD['old']['default_value'] + ' -> ' + TD['new']['default_value'])
+            #--plpy.notice('Updating attribute '+TD['old']['name']+' default value :' 
+            #--            + TD['old']['default_value'] + ' -> ' + TD['new']['default_value'])
             try:
                 with plpy.subtransaction():
                     plpy.execute('ALTER TABLE wed_flow ALTER COLUMN ' 
@@ -324,7 +324,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
 
             elif final:
                 if len(trans_set):
-                    plpy.error('There is pending WED-transitions, refusing to set a final WED-state!')
+                    plpy.error('There are pending WED-transitions, refusing to set a final WED-state!')
                 else:
                     new_trace_entry(k,v,job['tgid'],final=True)
                     set_st_status(job['wid'])

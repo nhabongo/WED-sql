@@ -14,15 +14,16 @@
 --check for conditions not associated with at least one transition (conditions that not fire any trigger)
 
 --algorithm: on insert: wed-pred (find condition id) -> wed_trig (find transition id) -> trg_pool (registry fired trigger) -> wed_trace (history)
---TRG_POOL store the trigger exceptions (for now)
+--JOB_POOL store the trigger exceptions (for now)
 -- Could be two instances of the same trigger running for the same WED-flow instance ! (Consider two ongoing WED-transitions t1
 --and t2 (lock is set on trg_pool), if t2 completes first and set the new WED-state to the very same state that fired t1, then
 --there will be two simultaneous running transitions t1. Sounds like a semantic error.
 --write a function to verify that all WED-conditions fire at least one WED-transition (DONE)
 --Can two or more diferent conditions fire the same transition ? (NO: use predicates instead)
---pgagent or background workers to catch stalled running transitions (timeout in prg_pool table)
---create a table to store all possible states (or maybe just final states)
+--pgagent or background workers (autovacuum) to catch stalled running transitions (timeout in prg_pool table)
+--create a table to store all possible states (or maybe just final states)(DONE, final condition)
 --block final states for further modifications ? (DONE)
---improve job management(maybe store an worker id)
+--improve job management(maybe store an worker id)(DONE)
 --exception tokens
+--better tying between transitions and conditions (restrict what each transition can do)
  
