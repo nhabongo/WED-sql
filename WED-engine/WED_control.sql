@@ -186,7 +186,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                 return False
             return True
     
-    #-- Check for conditions that do not fire at least one transition (ignore final conditions)-------------------------
+    #-- Check for conditions that do not fire at least one transition (ignoring final conditions)-------------------------
     def wed_trig_validation():
         try:
             res = plpy.execute('select c.cid from wed_cond c left join wed_trig t '+
@@ -298,7 +298,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         #-- token was provided
         if TD['new']['var_uptkn']:
             
-            #--ignored token lookup on job_pool if uptkn='exception' -------------------------
+            #--ignore token lookup on job_pool if uptkn='exception' -------------------------
             if TD['new']['var_uptkn'].lower() != 'exception': 
                 job = find_job(TD['new']['var_uptkn'])
                 #--plpy.notice(job,'nhaga')
@@ -384,5 +384,23 @@ DROP TRIGGER IF EXISTS lock_job ON job_pool;
 CREATE TRIGGER lock_job
 BEFORE UPDATE ON job_pool
     FOR EACH ROW EXECUTE PROCEDURE set_job_lock();
+
+------------------------------------------------------------------------------------------------------------------------
+-- Validate WED_pred (at least one of the wed-atributes values must be non null)
+CREATE OR REPLACE FUNCTION wed_pred_validation() RETURNS TRIGGER AS $wpv$
+    
+    if TD['event'] in ['INSERT','UPDATE']:       
+        k,v = zip(*[x for x in TD['new'].items() if x[0] not in ['pid','cid']])
+        if not any(v):
+            plpy.error('At least one WED-atribute must be non empty')
+    
+        return "OK"  
+    
+$wpv$ LANGUAGE plpython3u;
+
+DROP TRIGGER IF EXISTS wed_pred_val ON wed_pred;
+CREATE TRIGGER wed_pred_val
+BEFORE INSERT OR UPDATE ON wed_pred
+    FOR EACH ROW EXECUTE PROCEDURE wed_pred_validation();
 
 RESET ROLE;
