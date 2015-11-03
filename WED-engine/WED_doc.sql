@@ -26,4 +26,8 @@
 --improve job management(maybe store an worker id)(DONE)
 --exception tokens
 --better tying between transitions and conditions (restrict what each transition can do)
+--Should concurrent WED-transitions be aware of each other abortions ?
+--timeout abortion: forever pending job, job locked but not finished
+--deliberated abortion: user cancel, ...
+--disable trigger
  

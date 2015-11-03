@@ -92,10 +92,11 @@ CREATE TABLE ST_STATUS (
 --*WED-trace keeps the execution history for all instances
 CREATE TABLE WED_trace (
     wid     INTEGER,
-    tgid    INTEGER DEFAULT NULL,
+    tgid_wrote    INTEGER DEFAULT NULL,
+    tgid_fired    INTEGER[] DEFAULT NULL,
     final    BOOL NOT NULL DEFAULT FALSE,
     excpt    BOOL NOT NULL DEFAULT FALSE,
     tstmp      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (wid) REFERENCES WED_flow (wid) ON DELETE RESTRICT,
-    FOREIGN KEY (tgid) REFERENCES WED_trig (tgid) ON DELETE RESTRICT
+    FOREIGN KEY (tgid_wrote) REFERENCES WED_trig (tgid) ON DELETE RESTRICT
 );

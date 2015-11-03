@@ -122,7 +122,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     #--must block diferents conditions firing the same transition ------------------------------------------------------
     def squeeze_the_trigger(trg_set):
         
-        ftrg = 0
+        ftrg = set()
         if not trg_set:
             return ftrg
             
@@ -142,13 +142,13 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                     plpy.info('ERROR inserting new entry at JOB_POOL')
                     plpy.error(e)
                 else:
-                    ftrg += 1
+                    ftrg.add(r['tgid'])
         return ftrg            
     #--Create a new entry on history (WED_trace table) -----------------------------------------------------------------
-    def new_trace_entry(k,v,tgid=False,final=False,excpt=False):
-        if tgid:
-            k = k + ('tgid',)
-            v = v + (tgid,)
+    def new_trace_entry(k,v,tgid_wrote=False,final=False,excpt=False,tgid_fired=False):
+        if tgid_wrote:
+            k = k + ('tgid_wrote',)
+            v = v + (tgid_wrote,)
         
         if final:
             k = k + ('final',)
@@ -157,9 +157,14 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         if excpt:
             k = k + ('excpt',)
             v = v + (True,)
+            
+        if tgid_fired:
+            k = k + ('tgid_fired',)
+            v = v + (str(tgid_fired),)
         
         wed_columns = str(k).replace('\'','')
         wed_values = str(v)
+        plpy.info(wed_columns,wed_values)
         
         try:
             plpy.execute('INSERT INTO wed_trace ' + wed_columns + ' VALUES ' + wed_values)
@@ -275,8 +280,8 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         
         #-- if the initial state is a final state, do not fire any triggers
         if not final: 
-            squeeze_the_trigger(trg_set)
-            new_trace_entry(k,v)
+            fired = squeeze_the_trigger(trg_set)
+            new_trace_entry(k,v,tgid_fired=fired)
             new_st_status_entry(TD['new']['wid'])
         else:
             plpy.notice('Final WED-state reached (no triggers fired).')
@@ -331,8 +336,8 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                     plpy.info('Final WED-state reached!')
 
             else:
-                squeeze_the_trigger(trg_set - trans_set)
-                new_trace_entry(k,v,job['tgid'])
+                fired = squeeze_the_trigger(trg_set - trans_set)
+                new_trace_entry(k,v,job['tgid'],tgid_fired=fired)
                 set_st_status(job['wid'],final=False)
                 
                         
