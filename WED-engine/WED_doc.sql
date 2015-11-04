@@ -30,4 +30,7 @@
 --timeout abortion: forever pending job, job locked but not finished
 --deliberated abortion: user cancel, ...
 --disable trigger
+--compensation: S-1 -> fix the broken transition e fire then all again (if there is more than one transition for a given
+--state)
+--Asynchronous notifications to avoid pooling job_pool
  
