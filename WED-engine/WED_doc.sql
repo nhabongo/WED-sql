@@ -33,4 +33,6 @@
 --compensation: S-1 -> fix the broken transition e fire then all again (if there is more than one transition for a given
 --state)
 --Asynchronous notifications to avoid pooling job_pool
+--(index on job_pool.ti ??)
+--must remove completed jobs from job_pool in order to avoid colisions on uptkn
  

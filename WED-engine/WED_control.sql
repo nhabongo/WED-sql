@@ -221,7 +221,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         tf_str = plpy.quote_literal(str(datetime.now()))
         
         query = 'update job_pool set tf='+tf_str+'::timestamp where uptkn='+plpy.quote_literal(uptkn)+\
-                ' and locked and tf is null and ('+tf_str+'::timestamp - ti) < tout'+\
+                ' and locked and tf is null'+\
                 ' returning tgid,wid,uptkn,locked,tout,ti,tf'
         #--plpy.info(query)
         
@@ -276,6 +276,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     #--Only get the WED-attributes columns to insert into WED-trace-----------------------------------------------------
     k,v = zip(*[x for x in TD['new'].items() if x[0] not in ['var_uptkn']])
     
+    
     #-- New wed-flow instance (AFTER INSERT)----------------------------------------------------------------------------
     if TD['event'] in ['INSERT']:
         
@@ -308,24 +309,27 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         
         #-- token was provided
         if TD['new']['var_uptkn']:
-
-            rtrg = running_triggers(TD['new']['wid'])
-
+            
             #--ignore token lookup on job_pool if uptkn='exception' -------------------------
             if TD['new']['var_uptkn'].lower() != 'exception': 
+
                 job = find_job(TD['new']['var_uptkn'])
+                
                 if not job:
                     plpy.error('Job not found, not locked, expired or already completed, aborting ...')
                 elif TD['new']['wid'] != job['wid']:
                     plpy.error('invalid WED-flow instance id (wid) for provided uptkn')
-            else:
-                job = TD['old']
-                job['tgid'] = False
-                if rtrg:
-                    plpy.error('Current WED-state is not an exception !')
             
+            #--FIX ME !!!
+            else:
+                if not excpt:
+                    plpy.error('Current WED-state is not an exception !')
+                    
+                job = TD['new']
+                job['tgid'] = False
+
+            rtrg = running_triggers(TD['new']['wid'])
             cond_set, final = pred_match(k,v)
-            #--plpy.notice(trans_set,trg_set,final)
             
             #--no running triggers, not fired any new transitions and is not a final state 
             if (not rtrg) and (not cond_set):
@@ -355,6 +359,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     
     else:
         return "SKIP"
+        
     #--(END) TRIGGER CODE ----------------------------------------------------------------------------------------------    
 $kt$ LANGUAGE plpython3u;
 
@@ -386,8 +391,11 @@ CREATE OR REPLACE FUNCTION set_job_lock() RETURNS TRIGGER AS $pv$
         TD['new'] = TD['old']
         TD['new']['lckid'] = lckid
         TD['new']['locked'] = True
+        TD['new']['aborted'] = False
         TD['new']['ti'] = datetime.now()
-        
+    else:
+        return "SKIP"   
+    
     return "MODIFY"  
     
 $pv$ LANGUAGE plpython3u;
