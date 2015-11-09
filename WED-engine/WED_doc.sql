@@ -35,4 +35,8 @@
 --Asynchronous notifications to avoid pooling job_pool
 --(index on job_pool.ti ??)
 --must remove completed jobs from job_pool in order to avoid colisions on uptkn
+--temporay table for 'exception' token
+--postgresql.conf: shared_preload_libraries = 'wed_worker'
+--bg_worker: restart on failure ?
+--bg_worker: dynamically start on a given database
  

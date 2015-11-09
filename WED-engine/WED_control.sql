@@ -325,8 +325,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                 if not excpt:
                     plpy.error('Current WED-state is not an exception !')
                     
-                job = TD['new']
-                job['tgid'] = False
+                job = {'tgid':False, 'wid':TD['new']['wid']}
 
             rtrg = running_triggers(TD['new']['wid'])
             cond_set, final = pred_match(k,v)
