@@ -36,15 +36,10 @@ static volatile sig_atomic_t got_sighup = false;
 static volatile sig_atomic_t got_sigterm = false;
 
 /* GUC variables */
-static int	wed_worker_naptime = 10;
+static int	wed_worker_naptime = 1;
 static int	wed_worker_total_workers = 1;
+static char* wed_worker_db_name;
 
-
-typedef struct worktable
-{
-	const char *schema;
-	const char *name;
-} worktable;
 
 /*
  * Signal handler for SIGTERM
@@ -87,7 +82,8 @@ void
 wed_worker_main(Datum main_arg)
 {
 	StringInfoData buf;
-
+    
+    
 	/* Establish signal handlers before unblocking signals. */
 	pqsignal(SIGHUP, wed_worker_sighup);
 	pqsignal(SIGTERM, wed_worker_sigterm);
@@ -96,10 +92,10 @@ wed_worker_main(Datum main_arg)
 	BackgroundWorkerUnblockSignals();
 
 	/* Connect to our database */
-	BackgroundWorkerInitializeConnection("wedflox", NULL);
+	BackgroundWorkerInitializeConnection(wed_worker_db_name, NULL);
 
-	elog(LOG, "%s initialized",
-		 MyBgworkerEntry->bgw_name);
+	elog(LOG, "%s initialized in: %s",
+		 MyBgworkerEntry->bgw_name, wed_worker_db_name);
 
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "SELECT job_inspector()");
@@ -188,6 +184,18 @@ _PG_init(void)
 {
 	BackgroundWorker worker;
 	unsigned int i;
+	
+	/* Define wich database to attach  */
+    DefineCustomStringVariable("wed_worker.db_name",
+                              "WED-flow database to attach",
+                              NULL,
+                              &wed_worker_db_name,
+                              "wedflox",
+                              PGC_SIGHUP,
+                              0,
+                              NULL,
+                              NULL,
+                              NULL);
 
 	/* get the configuration */
 	DefineCustomIntVariable("wed_worker.naptime",
@@ -226,60 +234,61 @@ _PG_init(void)
 	worker.bgw_restart_time = BGW_NEVER_RESTART;
 	worker.bgw_main = wed_worker_main;
 	worker.bgw_notify_pid = 0;
-
 	/*
 	 * Now fill in worker-specific data, and do the actual registrations.
 	 */
 	for (i = 1; i <= wed_worker_total_workers; i++)
 	{
-		snprintf(worker.bgw_name, BGW_MAXLEN, "worker %d", i);
+		snprintf(worker.bgw_name, BGW_MAXLEN, "wed_worker %d", i);
 		worker.bgw_main_arg = Int32GetDatum(i);
-
 		RegisterBackgroundWorker(&worker);
 	}
 }
 
 /*
  * Dynamically launch an SPI worker.
- */
-
-//    Datum
-//    wed_worker_launch(PG_FUNCTION_ARGS)
-//    {
-//	    int32		i = PG_GETARG_INT32(0);
-//	    BackgroundWorker worker;
-//	    BackgroundWorkerHandle *handle;
-//	    BgwHandleStatus status;
-//	    pid_t		pid;
+// */
 //
-//	    worker.bgw_flags = BGWORKER_SHMEM_ACCESS |
-//		    BGWORKER_BACKEND_DATABASE_CONNECTION;
-//	    worker.bgw_start_time = BgWorkerStart_RecoveryFinished;
-//	    worker.bgw_restart_time = BGW_NEVER_RESTART;
-//	    worker.bgw_main = NULL;		/* new worker might not have library loaded */
-//	    sprintf(worker.bgw_library_name, "wed_worker");
-//	    sprintf(worker.bgw_function_name, "wed_worker_main");
-//	    snprintf(worker.bgw_name, BGW_MAXLEN, "wed_worker %d", i);
-//	    worker.bgw_main_arg = Int32GetDatum(i);
-//	    /* set bgw_notify_pid so that we can use WaitForBackgroundWorkerStartup */
-//	    worker.bgw_notify_pid = MyProcPid;
+//Datum
+//wed_worker_launch(PG_FUNCTION_ARGS)
+//{
+//    int32		i = PG_GETARG_INT32(0);
+//    text*       db_name = PG_GETARG_TEXT_P(1);
+//    BackgroundWorker worker;
+//    BackgroundWorkerHandle *handle;
+//    BgwHandleStatus status;
+//    pid_t		pid;
+//    
+//    elog(LOG, "dyn_launch: nargs = %d (%d, %s)", PG_NARGS(), i, tmp);
+//    
+//    worker.bgw_flags = BGWORKER_SHMEM_ACCESS |
+//	    BGWORKER_BACKEND_DATABASE_CONNECTION;
+//    worker.bgw_start_time = BgWorkerStart_RecoveryFinished;
+//    worker.bgw_restart_time = BGW_NEVER_RESTART;
+//    worker.bgw_main = NULL;		/* new worker might not have library loaded */
+//    sprintf(worker.bgw_library_name, "wed_worker");
+//    sprintf(worker.bgw_function_name, "wed_worker_main");
+//    snprintf(worker.bgw_name, BGW_MAXLEN, "wed_worker %d", i);
+//    worker.bgw_main_arg = Int32GetDatum(i);
+//    /* set bgw_notify_pid so that we can use WaitForBackgroundWorkerStartup */
+//    worker.bgw_notify_pid = MyProcPid;
 //
-//	    if (!RegisterDynamicBackgroundWorker(&worker, &handle))
-//		    PG_RETURN_NULL();
+//    if (!RegisterDynamicBackgroundWorker(&worker, &handle))
+//	    PG_RETURN_NULL();
 //
-//	    status = WaitForBackgroundWorkerStartup(handle, &pid);
+//    status = WaitForBackgroundWorkerStartup(handle, &pid);
 //
-//	    if (status == BGWH_STOPPED)
-//		    ereport(ERROR,
-//				    (errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-//				     errmsg("could not start background process"),
-//			       errhint("More details may be available in the server log.")));
-//	    if (status == BGWH_POSTMASTER_DIED)
-//		    ereport(ERROR,
-//				    (errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-//			      errmsg("cannot start background processes without postmaster"),
-//				     errhint("Kill all remaining database processes and restart the database.")));
-//	    Assert(status == BGWH_STARTED);
+//    if (status == BGWH_STOPPED)
+//	    ereport(ERROR,
+//			    (errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+//			     errmsg("could not start background process"),
+//		       errhint("More details may be available in the server log.")));
+//    if (status == BGWH_POSTMASTER_DIED)
+//	    ereport(ERROR,
+//			    (errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+//		      errmsg("cannot start background processes without postmaster"),
+//			     errhint("Kill all remaining database processes and restart the database.")));
+//    Assert(status == BGWH_STARTED);
 //
-//	    PG_RETURN_INT32(pid);
-//    }
+//    PG_RETURN_INT32(pid);
+//}
