@@ -190,7 +190,7 @@ _PG_init(void)
                               "WED-flow database to attach",
                               NULL,
                               &wed_worker_db_name,
-                              "wedflox",
+                              __DB_NAME__,
                               PGC_SIGHUP,
                               0,
                               NULL,
