@@ -18,8 +18,8 @@ with open(path,'r') as f:
             if w_str:
                 workers = set(w_str.split(','))
                 if worker_name in workers:
-                    print('\033[1;91mERROR:\033[0m worker %s already registered, aborting ...\n' % (worker_name))
-                    exit(1)
+                    print('\033[1;93mWARNING:\033[0m worker %s already registered.\n' % (worker_name))
+                    exit(0)
                 new_line = param+' = \''+','.join(w for w in workers)+','+worker_name+'\'\n'
                 new_file += new_line
                 print(new_line)

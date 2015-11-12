@@ -3,19 +3,20 @@
 TEMPLATE='wed_worker_template'
 DB=$1
 WORKER=${DB}_worker
-CONFIG=$2
+CONFIG=$3
+USER=$2
 
-if [[ $# < 2 ]]
+if [[ $# < 3 ]]
 then
-	echo "$0 <database name> <postgresql.conf file>"
+	echo "$0 <database name> <user name> <postgresql.conf file>"
 	exit 1
 elif [[ $UID != 0 ]]
 then
 	echo "Need to be root!"
 	exit 1
-elif [[ ! -f $2 ]]
+elif [[ ! -f $3 ]]
 then
-	echo "File $2 not found"
+	echo "File $3 not found"
 	exit 1
 fi
 
@@ -29,6 +30,12 @@ then
 
 	echo -e "Restarting postgresql server ..."
 	systemctl restart postgresql
+	echo -e "Removing database $DB ..."
+	echo -e "DROP OWNED BY $USER ;
+	         DROP DATABASE $DB ;
+	         DROP ROLE $USER ;" > tmp_drop
+	sudo -u postgres psql -f tmp_drop
+	rm -f tmp_drop
 fi
 
 echo "DONE !"

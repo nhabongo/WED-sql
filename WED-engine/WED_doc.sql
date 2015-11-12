@@ -27,7 +27,7 @@
 --exception tokens
 --better tying between transitions and conditions (restrict what each transition can do)
 --Should concurrent WED-transitions be aware of each other abortions ?
---timeout abortion: forever pending job, job locked but not finished
+--timeout abortion: forever pending job, job locked but not finished (done)
 --deliberated abortion: user cancel, ...
 --disable trigger
 --compensation: S-1 -> fix the broken transition e fire then all again (if there is more than one transition for a given
@@ -36,7 +36,8 @@
 --(index on job_pool.ti ??)
 --must remove completed jobs from job_pool in order to avoid colisions on uptkn
 --temporay table for 'exception' token
---postgresql.conf: shared_preload_libraries = 'wed_worker'
+--postgresql.conf: shared_preload_libraries = 'wed_worker' (done)
 --bg_worker: restart on failure ?
---bg_worker: dynamically start on a given database
+--bg_worker: dynamically start on a given database (aborted)
+--test install on ubuntu
  

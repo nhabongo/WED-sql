@@ -2,7 +2,7 @@
 --CREATE ROLE wed_admin WITH superuser noinherit;
 --GRANT wed_admin TO wedflow;
 
-SET ROLE wed_admin;
+--SET ROLE wed_admin;
 --Insert (or modify) a new WED-atribute in the apropriate tables 
 ------------------------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION new_wed_attr() RETURNS TRIGGER AS 
@@ -74,7 +74,7 @@ $new_attr$
         plpy.error('UNDEFINED EVENT')
         return None
     return None    
-$new_attr$ LANGUAGE plpython3u;
+$new_attr$ LANGUAGE plpython3u SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS new_attr ON wed_attr;
 CREATE TRIGGER new_attr
@@ -89,7 +89,6 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
     from os import urandom
     from datetime import datetime
     import hashlib
-    import binascii
     
     #--Generates new instance trigger token ----------------------------------------------------------------------------
     def new_uptkn(trigger_name):
@@ -360,7 +359,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
         return "SKIP"
         
     #--(END) TRIGGER CODE ----------------------------------------------------------------------------------------------    
-$kt$ LANGUAGE plpython3u;
+$kt$ LANGUAGE plpython3u SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS kernel_trigger_insert ON wed_flow;
 CREATE TRIGGER kernel_trigger_insert
@@ -397,7 +396,7 @@ CREATE OR REPLACE FUNCTION set_job_lock() RETURNS TRIGGER AS $pv$
     
     return "MODIFY"  
     
-$pv$ LANGUAGE plpython3u;
+$pv$ LANGUAGE plpython3u SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS lock_job ON job_pool;
 CREATE TRIGGER lock_job
@@ -415,13 +414,13 @@ CREATE OR REPLACE FUNCTION wed_pred_validation() RETURNS TRIGGER AS $wpv$
     
         return "OK"  
     
-$wpv$ LANGUAGE plpython3u;
+$wpv$ LANGUAGE plpython3u SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS wed_pred_val ON wed_pred;
 CREATE TRIGGER wed_pred_val
 BEFORE INSERT OR UPDATE ON wed_pred
     FOR EACH ROW EXECUTE PROCEDURE wed_pred_validation();
 
-RESET ROLE;
+--RESET ROLE;
 
 
