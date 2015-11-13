@@ -40,4 +40,28 @@ $$
     
 $$ LANGUAGE plpython3u;
 
+CREATE OR REPLACE FUNCTION job_lock(uptkn pg_catalog.text) RETURNS bool AS
+$$
+    try:
+        res = plpy.execute('update job_pool set locked=TRUE where uptkn='+plpy.quote_literal(uptkn))
+    
+    except plpy.SPIError as e:
+        plpy.error('job_lock error : '+str(e))
+    
+    return True if res.nrows() else False
+
+$$ LANGUAGE plpython3u SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION job_abort(uptkn pg_catalog.text) RETURNS bool AS
+$$
+    try:
+        res = plpy.execute('update job_pool set aborted=TRUE where uptkn='+plpy.quote_literal(uptkn))
+    
+    except plpy.SPIError as e:
+        plpy.error('job_lock error : '+str(e))
+    
+    return True if res.nrows() else False
+
+$$ LANGUAGE plpython3u SECURITY DEFINER;
+
 RESET ROLE; 

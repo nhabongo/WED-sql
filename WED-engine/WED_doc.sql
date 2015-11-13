@@ -20,7 +20,7 @@
 --there will be two simultaneous running transitions t1. Sounds like a semantic error.
 --write a function to verify that all WED-conditions fire at least one WED-transition (DONE)
 --Can two or more diferent conditions fire the same transition ? (NO: use predicates instead)
---pgagent or background workers (autovacuum) to catch stalled running transitions (timeout in prg_pool table)
+--pgagent or background workers (autovacuum) to catch stalled running transitions (timeout in prg_pool table) (DONE)
 --create a table to store all possible states (or maybe just final states)(DONE, final condition)
 --block final states for further modifications ? (DONE)
 --improve job management(maybe store an worker id)(DONE)
@@ -35,9 +35,12 @@
 --Asynchronous notifications to avoid pooling job_pool
 --(index on job_pool.ti ??)
 --must remove completed jobs from job_pool in order to avoid colisions on uptkn
+--only allow one lock per transaction on job_pool (enforce use of uptkn via stored procedure)
 --temporay table for 'exception' token
 --postgresql.conf: shared_preload_libraries = 'wed_worker' (done)
 --bg_worker: restart on failure ?
 --bg_worker: dynamically start on a given database (aborted)
 --test install on ubuntu
+--enforce that each wed-transition must modify its firing wed-attributes ?(a2='ready' -> a1='received' = trigger 1 fired again)
+--improve wed_flow update 
  

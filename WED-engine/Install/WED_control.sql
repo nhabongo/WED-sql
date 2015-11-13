@@ -2,7 +2,7 @@
 --CREATE ROLE wed_admin WITH superuser noinherit;
 --GRANT wed_admin TO wedflow;
 
---SET ROLE wed_admin;
+SET ROLE wed_admin;
 --Insert (or modify) a new WED-atribute in the apropriate tables 
 ------------------------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION new_wed_attr() RETURNS TRIGGER AS 
@@ -381,9 +381,15 @@ CREATE OR REPLACE FUNCTION set_job_lock() RETURNS TRIGGER AS $pv$
     #--plpy.info(TD['old'])
    
     if TD['old']['locked']:
-        plpy.error('Job \''+TD['new']['uptkn']+'\' already locked, aborting ...')
+        #--aborted a previously locked job
+        if TD['new']['aborted'] and not TD['old']['aborted']:
+            TD['new'] = TD['old']
+            TD['new']['aborted'] = True
+            TD['new']['tf'] = datetime.now()
+        else:
+            plpy.error('Job \''+TD['new']['uptkn']+'\' already locked or aborted, aborting ...')
     
-    if TD['new']['locked']:
+    elif TD['new']['locked']:
         #-- allow update only on 'locked' an 'lckid' columns
         lckid = TD['new']['lckid']
         TD['new'] = TD['old']
@@ -421,6 +427,6 @@ CREATE TRIGGER wed_pred_val
 BEFORE INSERT OR UPDATE ON wed_pred
     FOR EACH ROW EXECUTE PROCEDURE wed_pred_validation();
 
---RESET ROLE;
+RESET ROLE;
 
 
