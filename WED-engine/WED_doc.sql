@@ -35,7 +35,7 @@
 --Asynchronous notifications to avoid pooling job_pool
 --(index on job_pool.ti ??)
 --must remove completed jobs from job_pool in order to avoid colisions on uptkn
---only allow one lock per transaction on job_pool (enforce use of uptkn via stored procedure)
+--only allow one lock per transaction on job_pool (enforce use of uptkn via stored procedure)(done)
 --temporay table for 'exception' token
 --postgresql.conf: shared_preload_libraries = 'wed_worker' (done)
 --bg_worker: restart on failure ?

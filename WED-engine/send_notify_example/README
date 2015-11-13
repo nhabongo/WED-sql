@@ -1,0 +1,1 @@
+gcc `pg_config --cflags` testlibpq2.c -lpq
