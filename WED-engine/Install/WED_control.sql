@@ -142,6 +142,11 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                         plpy.error(e)
                     else:
                         ftrg.add(r['tgid'])
+                        #--send a NOTIFY notification for the newly created job (will fail if the notification queue is full)
+                        try:
+                            plpy.execute('NOTIFY NEW_JOB,\'{"tgid":"'+str(r['tgid'])+'","wid":"'+str(TD['new']['wid'])+'","uptkn:"'+uptkn+'"}\'')
+                        except plpy.SPIError:
+                            plpy.notice('Notification queue NEW_JOB full !')
         return ftrg            
     #--Create a new entry on history (WED_trace table) -----------------------------------------------------------------
     def new_trace_entry(k,v,tgid_wrote=False,final=False,excpt=False,tgid_fired=False):
