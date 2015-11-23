@@ -76,7 +76,7 @@ main(int argc, char **argv)
 	/*
 	 * Issue LISTEN command to enable notifications from the rule's NOTIFY.
 	 */
-	res = PQexec(conn, "LISTEN TBL2");
+	res = PQexec(conn, "LISTEN NEW_JOB");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "LISTEN command failed: %s", PQerrorMessage(conn));
@@ -121,8 +121,8 @@ main(int argc, char **argv)
 		while ((notify = PQnotifies(conn)) != NULL)
 		{
 			fprintf(stderr,
-					"ASYNC NOTIFY of '%s' received from backend PID %d\n",
-					notify->relname, notify->be_pid);
+					"ASYNC NOTIFY of '%s' received from backend PID %d: %s\n",
+					notify->relname, notify->be_pid, notify->extra);
 			PQfreemem(notify);
 			nnotifies++;
 		}

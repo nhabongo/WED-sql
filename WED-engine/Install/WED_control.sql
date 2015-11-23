@@ -2,7 +2,7 @@
 --CREATE ROLE wed_admin WITH superuser noinherit;
 --GRANT wed_admin TO wedflow;
 
-SET ROLE wed_admin;
+--SET ROLE wed_admin;
 --Insert (or modify) a new WED-atribute in the apropriate tables 
 ------------------------------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION new_wed_attr() RETURNS TRIGGER AS 
@@ -144,7 +144,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                         ftrg.add(r['tgid'])
                         #--send a NOTIFY notification for the newly created job (will fail if the notification queue is full)
                         try:
-                            plpy.execute('NOTIFY NEW_JOB,\'{"tgid":"'+str(r['tgid'])+'","wid":"'+str(TD['new']['wid'])+'","uptkn:"'+uptkn+'"}\'')
+                            plpy.execute('NOTIFY WTRG_'+str(r['tgid'])+',\'{"tgid":"'+str(r['tgid'])+'","wid":"'+str(TD['new']['wid'])+'","uptkn":"'+uptkn+'"}\'')
                         except plpy.SPIError:
                             plpy.notice('Notification queue NEW_JOB full !')
         return ftrg            
@@ -432,6 +432,6 @@ CREATE TRIGGER wed_pred_val
 BEFORE INSERT OR UPDATE ON wed_pred
     FOR EACH ROW EXECUTE PROCEDURE wed_pred_validation();
 
-RESET ROLE;
+--RESET ROLE;
 
 
