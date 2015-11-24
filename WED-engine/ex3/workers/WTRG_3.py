@@ -2,14 +2,24 @@ import select,sys,json
 import psycopg2
 import psycopg2.extensions
 
-import time
+import time,random
+
+channel='3'
+#dbs = "dbname='template1' user='dbuser' host='localhost' password='dbpass'"
+dbs = "user=ex3"
+wed_state_str = "a3='done'"
 
 def wed_state(tgid):
-    return "a1='final'"
+    global wed_state_str
+    if random.random() < 0.5:
+        return wed_state_str
+    else:
+        return "a3='error'"
     
 def wed_trans(curs, job, sleep):
+    global channel
     try:
-        curs.callproc('job_lock',[job['uptkn'],'W1_WTRG_4'])
+        curs.callproc('job_lock',[job['uptkn'],'W1_WTRG_'+channel])
     except Exception:
         print('Could not get a lock on job %s' %(job['uptkn']))
     else:
@@ -41,21 +51,17 @@ def job_lookup(curs,tgid):
         if data:
             job = dict()
             job['tgid'], job['wid'], job['uptkn'] = data
-            wed_trans(curs, job, 5)
+            wed_trans(curs, job, 1)
         else:
             print("Nothing to do, going back to sleep.")
             
 
 def main(argv):
-    if len(argv) > 2:
-        conn_str = argv[1]
-        tgid = argv[2]
-    else:
-        print('python %s <connection string> <channel to listen (tgid)>' %(sys.argv[0]))
-        return 1
-
+    
+    global channel,dbs
+    
     try:
-        conn = psycopg2.connect(conn_str)
+        conn = psycopg2.connect(dbs)
     except Exception as e:
         print(e)
         return 1
@@ -63,13 +69,13 @@ def main(argv):
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
     curs = conn.cursor()
-    curs.execute("LISTEN WTRG_"+tgid)
+    curs.execute("LISTEN WTRG_"+channel)
 
-    print("Listening on channel '\033[32mWTRG_%s\033[0m'" %(tgid))
+    print("Listening on channel '\033[32mWTRG_%s\033[0m'" %(channel))
     while 1:
         if select.select([conn],[],[],5) == ([],[],[]):
             print("Timeout: looking for pending jobs...")
-            job_lookup(curs,tgid)
+            job_lookup(curs,channel)
         else:
             conn.poll()
 
@@ -77,8 +83,7 @@ def main(argv):
                 notify = conn.notifies.pop(0)
                 print("Got NOTIFY: %d, %s, %s" %(notify.pid, notify.channel, notify.payload))
                 job = json.loads(notify.payload)
-                wed_trans(curs,job,26)
+                wed_trans(curs,job,1)
                
-
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

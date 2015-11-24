@@ -40,11 +40,13 @@ $$
     
 $$ LANGUAGE plpython3u;
 
-CREATE OR REPLACE FUNCTION job_lock(uptkn pg_catalog.text) RETURNS bool AS
+CREATE OR REPLACE FUNCTION job_lock(uptkn pg_catalog.text, lckid pg_catalog.text) RETURNS bool AS
 $$
     try:
-        res = plpy.execute('update job_pool set locked=TRUE where uptkn='+plpy.quote_literal(uptkn))
-    
+        if lckid:
+            res = plpy.execute('update job_pool set locked=TRUE, lckid='+plpy.quote_literal(lckid)+' where uptkn='+plpy.quote_literal(uptkn))
+        else:
+            res = plpy.execute('update job_pool set locked=TRUE where uptkn='+plpy.quote_literal(uptkn)) 
     except plpy.SPIError as e:
         plpy.error('job_lock error : '+str(e))
     

@@ -144,7 +144,7 @@ CREATE OR REPLACE FUNCTION kernel_function() RETURNS TRIGGER AS $kt$
                         ftrg.add(r['tgid'])
                         #--send a NOTIFY notification for the newly created job (will fail if the notification queue is full)
                         try:
-                            plpy.execute('NOTIFY WTRG_'+str(r['tgid'])+',\'{"tgid":"'+str(r['tgid'])+'","wid":"'+str(TD['new']['wid'])+'","uptkn":"'+uptkn+'"}\'')
+                            plpy.execute('NOTIFY WTRG_'+str(r['tgid'])+',\'{"tgid":'+str(r['tgid'])+',"wid":'+str(TD['new']['wid'])+',"uptkn":"'+uptkn+'"}\'')
                         except plpy.SPIError:
                             plpy.notice('Notification queue NEW_JOB full !')
         return ftrg            
