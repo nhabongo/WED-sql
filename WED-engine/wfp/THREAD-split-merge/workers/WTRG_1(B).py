@@ -6,8 +6,9 @@ import time
 
 channel='1'
 #dbs = "dbname='template1' user='dbuser' host='localhost' password='dbpass'"
-dbs = "user=ex3"
-wed_state_str = "a1='started',a2='ready',a3='ready'"
+#trgname = 'cb trigger'
+dbs = "user=thread"
+wed_state_str = "d2=d2::integer+1"
 
 def wed_state(tgid):
     global wed_state_str
@@ -48,7 +49,7 @@ def job_lookup(curs,tgid):
         if data:
             job = dict()
             job['tgid'], job['wid'], job['uptkn'] = data
-            wed_trans(curs, job, 5)
+            wed_trans(curs, job, 1)
         else:
             print("Nothing to do, going back to sleep.")
             
@@ -80,7 +81,7 @@ def main(argv):
                 notify = conn.notifies.pop(0)
                 print("\nGot NOTIFY: %d, %s, %s" %(notify.pid, notify.channel, notify.payload))
                 job = json.loads(notify.payload)
-                wed_trans(curs,job,26)
+                wed_trans(curs,job,1)
                
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

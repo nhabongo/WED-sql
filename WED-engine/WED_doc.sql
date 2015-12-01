@@ -47,4 +47,5 @@
 --set priority for condition match
 --a new wed-flow instance can be started at any state (including de final state)
 --if a wed-state reach a final state ? block if pending transitions or abort all pending transitions ?
+--wed-flow validation.
  
