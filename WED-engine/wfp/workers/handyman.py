@@ -4,11 +4,11 @@ import psycopg2.extensions
 
 import time
 
-channel='3'
+channel=""
 #dbs = "dbname='template1' user='dbuser' host='localhost' password='dbpass'"
-#trgname = 'cd trigger'
-dbs = "user=xors"
-wed_state_str = "d5='1'"
+#trgname = ''
+dbs = ""
+wed_state_str = ""
 
 def wed_state(tgid):
     global wed_state_str
@@ -56,7 +56,15 @@ def job_lookup(curs,tgid):
 
 def main(argv):
     
-    global channel,dbs
+    global channel,dbs,wed_state_str
+    
+    if(len(argv) < 4):
+        print("python %s <channel> <conn_str> <wed_state_str>" %(argv[0]))
+        sys.exit(1)
+    else:
+        channel = argv[1]
+        dbs = argv[2]
+        wed_state_str = argv[3]
     
     try:
         conn = psycopg2.connect(dbs)
