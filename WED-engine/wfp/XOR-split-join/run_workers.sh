@@ -2,7 +2,7 @@
 
 #XOR-split-join.wsql
 
-DBS='user=xors'
+DBS='user=xorsj'
 
 intexit(){
     kill -HUP -$$

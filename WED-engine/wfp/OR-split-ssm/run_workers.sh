@@ -2,7 +2,7 @@
 
 #OR-split.wsql
 
-DBS='user=orssm'
+DBS='user=orsssm'
 
 intexit(){
     kill -HUP -$$

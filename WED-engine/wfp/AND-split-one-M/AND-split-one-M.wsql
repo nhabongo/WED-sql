@@ -1,0 +1,56 @@
+BEGIN;
+--WED-attributes
+INSERT INTO wed_attr (name, default_value) values ('d1','0'),('d2','0'),('d3','0'),('d4','0'),('d5','0');
+
+--WED-conditions
+INSERT INTO wed_cond (cname,cdesc) values ('cb','condition b'),('cc','condition c'),('cd','condition d'),('cn','condition n');
+INSERT INTO wed_cond (final,cname,cdesc) values ('t','final','final condition');
+
+--order of match (final condition must come first !)
+
+INSERT INTO wed_pred (cid,d2,d3,d4,d5) values ((select cid from wed_cond where cname='final'),'1','1','1','1');
+
+INSERT INTO wed_pred (cid,d2,d3,d4,d5) values ((select cid from wed_cond where cname='cn'),'1','0','0','0');
+INSERT INTO wed_pred (cid,d2,d3,d4,d5) values ((select cid from wed_cond where cname='cn'),'0','1','0','0');
+INSERT INTO wed_pred (cid,d2,d3,d4,d5) values ((select cid from wed_cond where cname='cn'),'0','0','1','0');
+
+INSERT INTO wed_pred (cid,d1,d2) values ((select cid from wed_cond where cname='cb'), '1','0');
+INSERT INTO wed_pred (cid,d1,d3) values ((select cid from wed_cond where cname='cc'), '1','0');
+INSERT INTO wed_pred (cid,d1,d4) values ((select cid from wed_cond where cname='cd'), '1','0');
+
+
+--WED-transitions
+INSERT INTO wed_trans (trname,trdesc) values ('B', 'd1=1 -> d2=1');
+INSERT INTO wed_trans (trname,trdesc) values ('C', 'd1=1 -> d3=1');
+INSERT INTO wed_trans (trname,trdesc) values ('D', 'd1=1 -> d4=1');
+INSERT INTO wed_trans (trname,trdesc) values ('N', 'd2=1 or d3=1 or d4=1 -> d5=1');
+
+--WED-triggers
+INSERT INTO wed_trig (cid,trid,tgname,tout) values ((select cid from wed_cond where cname='cb'), 
+                                             (select trid from wed_trans where trname='B'),
+                                             'cb trigger','00:00:10');
+INSERT INTO wed_trig (cid,trid,tgname,tout) values ((select cid from wed_cond where cname='cc'), 
+                                             (select trid from wed_trans where trname='C'),
+                                             'cc trigger','00:00:10');
+INSERT INTO wed_trig (cid,trid,tgname,tout) values ((select cid from wed_cond where cname='cd'), 
+                                             (select trid from wed_trans where trname='D'),
+                                             'cd trigger','00:00:10');
+INSERT INTO wed_trig (cid,trid,tgname,tout) values ((select cid from wed_cond where cname='cn'), 
+                                             (select trid from wed_trans where trname='N'),
+                                             'cn trigger','00:00:10');                                            
+
+--Display G (set of WED-triggers)                                             
+SELECT tgname,cdesc,trdesc 
+FROM wed_cond 
+    INNER JOIN wed_trig ON wed_cond.cid = wed_trig.cid 
+    INNER JOIN wed_trans ON wed_trig.trid = wed_trans.trid;
+
+COMMIT;
+--list all jobs not locked
+--SELECT * FROM job_pool WHERE NOT locked;          
+--lock a job
+--UPDATE job_pool SET locked='t' WHERE wid=2 AND tgid=2 RETURNING itkn;                            
+--list exceptions
+--SELECT * FROM trg_pool WHERE locked AND (CURRENT_TIMESTAMP - ti) > tout;
+
+--get a task                        

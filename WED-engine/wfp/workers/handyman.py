@@ -1,4 +1,4 @@
-import select,sys,json
+import select,sys,json,random
 import psycopg2
 import psycopg2.extensions
 
@@ -9,6 +9,7 @@ channel=""
 #trgname = ''
 dbs = ""
 wed_state_str = ""
+delay = 1
 
 def wed_state(tgid):
     global wed_state_str
@@ -49,14 +50,14 @@ def job_lookup(curs,tgid):
         if data:
             job = dict()
             job['tgid'], job['wid'], job['uptkn'] = data
-            wed_trans(curs, job, 1)
+            wed_trans(curs, job, delay)
         else:
             print("Nothing to do, going back to sleep.")
             
 
 def main(argv):
     
-    global channel,dbs,wed_state_str
+    global channel,dbs,wed_state_str,delay
     
     if(len(argv) < 4):
         print("python %s <channel> <conn_str> <wed_state_str>" %(argv[0]))
@@ -65,6 +66,9 @@ def main(argv):
         channel = argv[1]
         dbs = argv[2]
         wed_state_str = argv[3]
+    
+    if len(argv) == 5:
+        delay = float(argv[4]) * random.random()
     
     try:
         conn = psycopg2.connect(dbs)
@@ -89,7 +93,7 @@ def main(argv):
                 notify = conn.notifies.pop(0)
                 print("\nGot NOTIFY: %d, %s, %s" %(notify.pid, notify.channel, notify.payload))
                 job = json.loads(notify.payload)
-                wed_trans(curs,job,1)
+                wed_trans(curs,job,delay)
                
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

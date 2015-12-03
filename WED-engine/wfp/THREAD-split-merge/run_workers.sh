@@ -2,7 +2,7 @@
 
 #thread-split-merge.wsql
 
-DBS='user=thread'
+DBS='user=tsm'
 
 intexit(){
     kill -HUP -$$
