@@ -8,25 +8,32 @@ INSERT INTO wed_cond (final,cname,cdesc) values ('t','final','final condition');
 
 --order of match (final condition must come first !)
 
-INSERT INTO wed_pred (cid,d7) values ((select cid from wed_cond where cname='final'), '1');
+INSERT INTO wed_pred (cid,d1,d2,d3,d7) values ((select cid from wed_cond where cname='final'),'1','1','1','3');
+INSERT INTO wed_pred (cid,d1,d2,d3,d7) values ((select cid from wed_cond where cname='final'),'1','1','0','2');
+INSERT INTO wed_pred (cid,d1,d2,d3,d7) values ((select cid from wed_cond where cname='final'),'1','0','1','2');
+INSERT INTO wed_pred (cid,d1,d2,d3,d7) values ((select cid from wed_cond where cname='final'),'0','1','1','2');
+INSERT INTO wed_pred (cid,d1,d2,d3,d7) values ((select cid from wed_cond where cname='final'),'1','0','0','1');
+INSERT INTO wed_pred (cid,d1,d2,d3,d7) values ((select cid from wed_cond where cname='final'),'0','1','0','1');
+INSERT INTO wed_pred (cid,d1,d2,d3,d7) values ((select cid from wed_cond where cname='final'),'0','0','1','1');
 
-INSERT INTO wed_pred (cid,d1,d2,d3,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'0','1','1','1','0','0');
-INSERT INTO wed_pred (cid,d1,d2,d3,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'1','0','1','0','1','0');
-INSERT INTO wed_pred (cid,d1,d2,d3,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'1','1','0','0','0','1');
-INSERT INTO wed_pred (cid,d1,d2,d3,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'0','0','1','1','1','0');
-INSERT INTO wed_pred (cid,d1,d2,d3,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'0','1','0','1','0','1');
-INSERT INTO wed_pred (cid,d1,d2,d3,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'1','0','0','0','1','1');
-INSERT INTO wed_pred (cid,d1,d2,d3,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'0','0','0','1','1','1');
+INSERT INTO wed_pred (cid,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'1','0','0');
+INSERT INTO wed_pred (cid,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'0','1','0');
+INSERT INTO wed_pred (cid,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'0','0','1');
+INSERT INTO wed_pred (cid,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'1','1','0');
+INSERT INTO wed_pred (cid,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'1','0','1');
+INSERT INTO wed_pred (cid,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'0','1','1');
+INSERT INTO wed_pred (cid,d4,d5,d6) values ((select cid from wed_cond where cname='cn'),'1','1','1');
 
-INSERT INTO wed_pred (cid,d1,d4,d5,d6) values ((select cid from wed_cond where cname='cb'), '0','0','0','0');
-INSERT INTO wed_pred (cid,d2,d4,d5,d6) values ((select cid from wed_cond where cname='cc'), '0','0','0','0');
-INSERT INTO wed_pred (cid,d3,d4,d5,d6) values ((select cid from wed_cond where cname='cd'), '0','0','0','0');
+
+INSERT INTO wed_pred (cid,d1,d4,d5,d6) values ((select cid from wed_cond where cname='cb'), '1','0','0','0');
+INSERT INTO wed_pred (cid,d2,d4,d5,d6) values ((select cid from wed_cond where cname='cc'), '1','0','0','0');
+INSERT INTO wed_pred (cid,d3,d4,d5,d6) values ((select cid from wed_cond where cname='cd'), '1','0','0','0');
 
 
 --WED-transitions
-INSERT INTO wed_trans (trname,trdesc) values ('B', 'd1=0 -> d4=1');
-INSERT INTO wed_trans (trname,trdesc) values ('C', 'd2=0 -> d5=1');
-INSERT INTO wed_trans (trname,trdesc) values ('D', 'd3=0 -> d6=1');
+INSERT INTO wed_trans (trname,trdesc) values ('B', 'd1=1 -> d4=1');
+INSERT INTO wed_trans (trname,trdesc) values ('C', 'd2=1 -> d5=1');
+INSERT INTO wed_trans (trname,trdesc) values ('D', 'd3=1 -> d6=1');
 INSERT INTO wed_trans (trname,trdesc) values ('N', ' 2^3 - 1 -> d7=1');
 
 --WED-triggers

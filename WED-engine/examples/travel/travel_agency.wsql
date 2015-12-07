@@ -19,20 +19,20 @@ INSERT INTO wed_cond (final,cname,cdesc) values ('t','c_order_finalized','Done (
 INSERT INTO wed_pred (cid, order_status, customer_status) 
     VALUES ((select cid from wed_cond where cname='c_new_travel_request'), 'received', 'not validated');
     
-INSERT INTO wed_pred (cid, hotel_status, order_status) 
-    VALUES ((select cid from wed_cond where cname='c_hotel_requested'), 'requested', 'validated');
+INSERT INTO wed_pred (cid, hotel_status, order_status, customer_status) 
+    VALUES ((select cid from wed_cond where cname='c_hotel_requested'), 'requested', 'validated', 'validated');
     
-INSERT INTO wed_pred (cid, air_ticket_status, order_status) 
-    VALUES ((select cid from wed_cond where cname='c_air_ticket_requested'), 'requested', 'validated');
+INSERT INTO wed_pred (cid, air_ticket_status, order_status, customer_status) 
+    VALUES ((select cid from wed_cond where cname='c_air_ticket_requested'), 'requested', 'validated', 'validated');
 
-INSERT INTO wed_pred (cid, hotel_status, air_ticket_status) 
-    VALUES ((select cid from wed_cond where cname='c_request_treated'), 'reserved', 'purchased');
+INSERT INTO wed_pred (cid, air_ticket_status, hotel_status) 
+    VALUES ((select cid from wed_cond where cname='c_request_treated'), 'purchased', 'reserved');
     
-INSERT INTO wed_pred (cid, customer_status, air_ticket_status, hotel_status, order_status) 
-    VALUES ((select cid from wed_cond where cname='c_order_finalized'), 'validated', 'purchased', 'reserved', 'finalized');
+INSERT INTO wed_pred (cid, air_ticket_status, hotel_status, order_status) 
+    VALUES ((select cid from wed_cond where cname='c_order_finalized'), 'purchased', 'reserved', 'finalized');
 
 --WED-transitions-------------------------------------------------------------------------------------------------------
-INSERT INTO wed_trans (trname,trdesc) values ('t_validate_travel_request', 'validate new travel data');
+INSERT INTO wed_trans (trname,trdesc) values ('t_validate_travel_request', 'validate customer, request air ticket and hotel reservation');
 INSERT INTO wed_trans (trname,trdesc) values ('t_reserve_hotel', 'make a hotel reservation');
 INSERT INTO wed_trans (trname,trdesc) values ('t_buy_air_ticket', 'Get an airplane ticket');
 INSERT INTO wed_trans (trname,trdesc) values ('t_close_travel_request', 'Finalize travel request');
@@ -68,32 +68,4 @@ FROM wed_cond
   
 --Create a new WED-flow instance 
 --INSERT INTO wed_flow (customer_id, order_id, order_status) VALUES ('A57FB', '14973', 'received');
---SELECT * FROM wed_flow;
-
---Display job pool
---SELECT * from job_pool;
-
---lock a job
---UPDATE job_pool SET locked='t',lckid='worker one' WHERE uptkn='886874f113b093b833b6cc95f0d9d4a5' RETURNING uptkn;
-
---Display job pool
---SELECT * from job_pool;
-
---update WED-flow instance
---update wed_flow set customer_status='validated',air_ticket_status='requested', hotel_status='requested',order_status='validated' ,var_uptkn='e0ced891ed51489e84bf83ad1b89c557' where wid=1;
---SELECT * from job_pool;
---UPDATE job_pool SET locked='t',lckid='worker one' WHERE uptkn='886874f113b093b833b6cc95f0d9d4a5' RETURNING uptkn;
---UPDATE job_pool SET locked='t',lckid='worker one' WHERE uptkn='f46cb26bd1b3fb53acb5014d6cb42e1d' RETURNING uptkn;
---update wed_flow set hotel_id='h7319', hotel_status='reserved', var_uptkn='f46cb26bd1b3fb53acb5014d6cb42e1d' where wid=1;
---SELECT * from job_pool;
--- update wed_flow set air_ticket_id='a2309', air_ticket_status='purchased', var_uptkn='707aee6849be381886dc26019b1a305f' where wid=1;
---SELECT * from job_pool;
---UPDATE job_pool SET locked='t',lckid='dispatcher' WHERE uptkn='dec58b4b6e412f558b56e1a8df36271c' RETURNING uptkn;
---update wed_flow set order_status='finalized', var_uptkn='dec58b4b6e412f558b56e1a8df36271c' where wid=1;
---select * from wed_trace where wid=1;
-
-
-
---Display the execution history for a given WED-flow instance
---select * from wed_trace where wid=1;
 

@@ -48,4 +48,8 @@
 --a new wed-flow instance can be started at any state (including de final state)
 --if a wed-state reach a final state ? block if pending transitions or abort all pending transitions ?
 --wed-flow validation.
- 
+--view to display condition x predicates table
+--implement delete
+--set notification channel with wed-trigger name instead of id
+--allow to have two or more instances of the same transition at the same time ?(NO,done)
+--implement predicate boolean operator 'NOT' for predicates
