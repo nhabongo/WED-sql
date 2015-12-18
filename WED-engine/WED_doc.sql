@@ -53,3 +53,8 @@
 --set notification channel with wed-trigger name instead of id
 --allow to have two or more instances of the same transition at the same time ?(NO,done)
 --implement predicate boolean operator 'NOT' for predicates
+--get rid of tokens and use transactions(pg_terminate_backend(pid))
+--use sql expression to match conditions
+--lock_timeout
+--advisory locks (select pg_try_advisory_lock(('wedflow'::regclass)::integer, 3); select pg_advisory_unlock(('wedflow'::regclass)::integer, 3);)
+--pgrowlocks

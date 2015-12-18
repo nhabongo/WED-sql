@@ -1,4 +1,5 @@
 --CREATE LANGUAGE plpython3u;
+--CREATE EXTENSION pgrowlocks;
 --CREATE ROLE wed_admin WITH superuser noinherit;
 --GRANT wed_admin TO wedflow;
 
